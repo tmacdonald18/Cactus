@@ -1,5 +1,5 @@
+import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -12,32 +12,30 @@ public class OptionsPanel extends JPanel {
 	private DataTextPanel data;
 	private TileChooser tileChooser;
 	
+	private StringListener selectionListener;
+	
 	public OptionsPanel()
 	/*
 	 * This is a constructor
 	 */
 	{
-		data = new DataTextPanel();
-		resize = new JButton("Resize");
-		tileChooser = new TileChooser("C:\\Users\\Tyler\\Desktop\\test.png");
+		//data = new DataTextPanel();
+		//tileChooser = new TileChooser("C:\\Users\\Tyler\\Desktop\\test.png");
+		tileChooser = new TileChooser("C:\\Users\\n0286782\\Desktop\\test.png");
+		tileChooser.setStringListener(new StringListener(){
+
+			@Override
+			public void textEmitted(String text) {
+				selectionListener.textEmitted(text);
+			}
+			
+		});
 		
-		setLayout(new GridBagLayout());
+		setLayout(new BorderLayout());
 		
-		GridBagConstraints gc = new GridBagConstraints();
+		//add(data, BorderLayout.NORTH);
 		
-		gc.weightx = 1.0;
-		gc.weighty = 1.0;
-		gc.gridx = 0;
-		gc.gridy = 0;
-		
-		add(resize, gc);
-		
-		gc.gridy = 1;
-		gc.fill = GridBagConstraints.BOTH;
-		add(data, gc);
-		
-		gc.gridy = 2;
-		add(tileChooser, gc);
+		add(tileChooser, BorderLayout.CENTER);
 	}
 
 	public DataTextPanel getData() {
@@ -48,4 +46,11 @@ public class OptionsPanel extends JPanel {
 		this.data = data;
 	}
 
+	public void setStringListener(StringListener listener) {
+		this.selectionListener = listener;
+	}
+	
+	public TileChooser getTileChooser() {
+		return this.tileChooser;
+	}
 }

@@ -1,5 +1,7 @@
 import java.awt.BorderLayout;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,11 +10,16 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 public class TileChooser extends JPanel {
 
 	private String tilesetPath;
 	private GridUI miniGrid;
+	private BufferedImage[] images;
+	private StringListener choiceListener;
+	
+	private int numTiles, rows, cols;
 	
 	public TileChooser(String tilesetPath)
 	/*
@@ -20,14 +27,42 @@ public class TileChooser extends JPanel {
 	 */
 	{
 		this.tilesetPath = tilesetPath;
-		int numTiles = splitTileset();
+		this.numTiles = splitTileset();
 		
-		miniGrid = new GridUI(numTiles / 3, 5, "mini");
+		miniGrid = new GridUI(rows, cols, "mini");
+		miniGrid.setStringListener(new StringListener(){
+
+			@Override
+			public void textEmitted(String text) {
+				choiceListener.textEmitted(text);
+			}
+			
+		});
+		
+		int counter = 0;
+		
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				miniGrid.getTile(i, j).setImage(scale(images[counter], BufferedImage.TYPE_INT_ARGB, 64, 64, 2.0, 2.0));
+				counter++;
+			}
+		}
 		
 		setLayout(new BorderLayout());
 		
-		add(miniGrid, BorderLayout.CENTER);
+		add(new JScrollPane(miniGrid), BorderLayout.CENTER);
 		
+	}
+	
+	private BufferedImage scale(BufferedImage sbi, int imageType, int dWidth, int dHeight, double fWidth, double fHeight) {
+		BufferedImage dbi = null;
+		if (sbi != null) {
+			dbi = new BufferedImage(dWidth, dHeight, imageType);
+			Graphics2D g = dbi.createGraphics();
+			AffineTransform at = AffineTransform.getScaleInstance(fWidth, fHeight);
+			g.drawRenderedImage(sbi, at);
+		}
+		return dbi;
 	}
 	
 	private int splitTileset() 
@@ -54,8 +89,8 @@ public class TileChooser extends JPanel {
 			e.printStackTrace();
 		} //reading the image file
 
-        int rows = image.getHeight() / 32; //You should decide the values for rows and cols variables
-        int cols = image.getWidth() / 32;
+        rows = image.getHeight() / 32; //You should decide the values for rows and cols variables
+        cols = image.getWidth() / 32;
         int chunks = rows * cols;
 
         int chunkWidth = image.getWidth() / cols; // determines the chunk width and height
@@ -75,6 +110,8 @@ public class TileChooser extends JPanel {
         }
         System.out.println("Splitting done");
 
+        this.images = imgs;
+        
         //writing mini images into image files
         for (int i = 0; i < imgs.length; i++) {
             try {
@@ -89,5 +126,28 @@ public class TileChooser extends JPanel {
         System.out.println("Mini images created");
         
         return imgs.length;
+	}
+	
+	public BufferedImage getSpecficImage(int row, int col) 
+	/*
+	 * Given a tile row and column should return the associated BufferedImage from images
+	 */
+	{
+		int counter = 0;
+		int selection = 0;
+		
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				if (i == row && j == col)
+					selection = counter;
+				counter++;
+			}
+		}
+		
+		return images[selection];
+	}
+	
+	public void setStringListener(StringListener listener) {
+		this.choiceListener = listener;
 	}
 }

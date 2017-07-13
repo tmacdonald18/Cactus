@@ -1,19 +1,23 @@
-import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
 public class GridUI extends JPanel {
 
 	private Tile[][] tiles;
 	private int rows, cols, tileWidth;
-	
 	private String selectedPath;
 	private StringListener gridListener;
+	private String savePath;
 	
-	public GridUI(int rows, int cols, String type) 
+	public GridUI(int rows, int cols, final String type) 
 	/*
 	 * Constructor
 	 */
@@ -22,28 +26,37 @@ public class GridUI extends JPanel {
 			this.rows = rows;
 			this.cols = cols;
 			this.tileWidth = 32;
+			this.savePath = "default.png";
 			
-			setLayout(new GridLayout(rows, cols));
+			setLayout(new GridBagLayout());
+			GridBagConstraints gc = new GridBagConstraints();
+			
+			gc.weightx = 1;
+			gc.weighty = 1;
+			gc.fill = GridBagConstraints.NONE;
+			gc.anchor = GridBagConstraints.CENTER;
 			
 			tiles = new Tile[rows][cols];
 			
 			//initialize tiles
 			for (int i = 0; i < rows; i++) {
+				gc.gridx = i;
 				for (int j = 0; j < cols; j++) {
-					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth);
-					add(tiles[i][j]);
+					gc.gridy = j;
+					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j);
+					add(tiles[i][j], gc);
 					tiles[i][j].setStringListener(new StringListener(){
 	
 						@Override
 						public void textEmitted(String text) {
-							gridListener.textEmitted(text);
+							gridListener.textEmitted(type + "," + text);
 						}
 						
 					});
 				}
 			}
 			
-			setPreferredSize(new Dimension(rows * 32, cols * 32));
+			//setPreferredSize(new Dimension(rows * 32, cols * 32));
 		} else if (type == "mini") {
 			this.rows = rows;
 			this.cols = cols;
@@ -56,25 +69,17 @@ public class GridUI extends JPanel {
 			//initialize tiles
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth);
+					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j);
 					add(tiles[i][j]);
 					tiles[i][j].setStringListener(new StringListener(){
 	
 						@Override
 						public void textEmitted(String text) {
-							gridListener.textEmitted(text);
+							gridListener.textEmitted(type + "," + text);
 						}
 						
 					});
 				}
-			}
-		}
-	}
-	
-	private void setAllPaths() {
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				tiles[i][j].setImagePath(this.selectedPath);
 			}
 		}
 	}
@@ -97,6 +102,36 @@ public class GridUI extends JPanel {
 	 */
 	{
 		return this.tiles[i][j];
+	}
+	
+	public void setSavePath(String path) {
+		if (!path.endsWith(".png"))
+			path = path + ".png";
+		
+		this.savePath = path;
+	}
+	
+	public void saveGrid()
+	/*
+	 * This is the save function which will combine all of the tiles into one giant PNG bitmap image
+	 */
+	{
+		BufferedImage result = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_INT_ARGB);
+		Graphics g = result.getGraphics();
+		
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				BufferedImage temp = tiles[i][j].getImage();
+				g.drawImage(temp, i * this.tileWidth, j * this.tileWidth, null);
+			}
+		}
+		
+		try {
+			ImageIO.write(result, "png", new File(this.savePath));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 

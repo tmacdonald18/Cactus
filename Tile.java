@@ -12,7 +12,7 @@ import javax.swing.JPanel;
 
 class Tile extends JPanel implements MouseListener {
 	
-	private int xMin, yMin, width, layer;
+	private int xMin, yMin, width, layer, row, col;
 	private boolean collision;
 	
 	private String imagePath;
@@ -20,7 +20,7 @@ class Tile extends JPanel implements MouseListener {
 	
 	private StringListener listener;
 	
-	public Tile(int x, int y, int width)
+	public Tile(int x, int y, int width, int row, int col)
 	/*
 	 * Default Constructor for a tile
 	 */
@@ -32,6 +32,8 @@ class Tile extends JPanel implements MouseListener {
 		this.width = width;
 		this.collision = false;
 		this.layer = 0;	
+		this.row = row;
+		this.col = col;
 		
 		addMouseListener(this);
 		
@@ -94,14 +96,12 @@ class Tile extends JPanel implements MouseListener {
 	}
 
 	@Override
-	public void mousePressed(MouseEvent e) {
-		if (this.listener != null)
-			listener.textEmitted(this.toString());
-		
-		if (e.getButton() == MouseEvent.BUTTON1)
-			this.image = this.convertToImage(this.imagePath);
-		else if (e.getButton() == MouseEvent.BUTTON3)
+	public void mousePressed(MouseEvent e) {		
+		if (e.getButton() == MouseEvent.BUTTON1 && this.listener != null) {
+			listener.textEmitted(this.row + "," + this.col);
+		} else if (e.getButton() == MouseEvent.BUTTON3) {
 			this.image = null;
+		}
 		
 		repaint();
 		
