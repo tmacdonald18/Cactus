@@ -13,10 +13,12 @@ import javax.swing.border.TitledBorder;
 
 public class MainFrame extends JFrame {
 
-	public static final int ROW_COUNT = 50, COLUMN_COUNT = 50;
+	public int ROW_COUNT, COLUMN_COUNT;
 	
 	private GridUI grid;
 	private OptionsPanel options;
+	
+	private JScrollPane scroll;
 	
 	private BufferedImage selectedImage = null;
 	
@@ -26,6 +28,33 @@ public class MainFrame extends JFrame {
 	 */
 	{
 		super("Cactus");
+		
+		//Need to choose to load a level or create a new one
+		Object[] choice = {"New", "Load"};
+		int n = JOptionPane.showOptionDialog(null, "Are you creating a new level or loading one?", "Start up", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, choice, choice[1]);
+		
+		switch(n){
+		case JOptionPane.NO_OPTION:
+			//loading a level
+			JFileChooser fc = new JFileChooser();
+			int result = fc.showOpenDialog(null);
+
+			if (result == JFileChooser.APPROVE_OPTION) {
+				String loadPath = fc.getSelectedFile().getAbsolutePath();
+				//loadLevel(loadPath);
+			}
+
+			break;
+		case JOptionPane.YES_OPTION:
+			//creating a new level
+			//prompt for row count and column count and tileset path
+			
+			String s = (String) JOptionPane.showInputDialog("Enter rows,columns (example: 32,32)");
+			this.ROW_COUNT = Integer.parseInt(s.split(",")[0].replace(" ", ""));
+			this.COLUMN_COUNT = Integer.parseInt(s.split(",")[1].replace(" ", ""));
+			
+			break;
+		}
 		
 		JPanel gridContainer = new JPanel();
 		gridContainer.setLayout(new GridBagLayout());
@@ -57,7 +86,7 @@ public class MainFrame extends JFrame {
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
 		
-		JScrollPane scroll = new JScrollPane(gridContainer);
+		scroll = new JScrollPane(gridContainer);
 		
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER))
@@ -75,34 +104,61 @@ public class MainFrame extends JFrame {
 		    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
 		        //save prompt
 		    	//delete all files in current_session
-		    	grid.saveGrid();
 		    	
-		    	File cur = new File("src" + File.separator + "current_session");
-		    	
-		    	for(File file: cur.listFiles()) 
-		    	    if (!file.isDirectory()) 
-		    	        file.delete();
-		    	
-		    	System.exit(0);
+		    	//show save prompt
+		    	Object[] options = {"Yes", "No", "Cancel"};
+				int answer = JOptionPane.showOptionDialog(null, "Would you like to save?", "Save?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2]);
+				
+				switch(answer) {
+					case JOptionPane.YES_OPTION:
+						
+						JFileChooser fc = new JFileChooser();
+						int returnVal = fc.showSaveDialog(null);
+						
+						if (returnVal == JFileChooser.APPROVE_OPTION) {
+							grid.setSavePath(fc.getSelectedFile().getAbsolutePath());
+						}
+						
+						grid.saveGrid();
+					case JOptionPane.NO_OPTION:
+						File cur = new File("src" + File.separator + "current_session");
+						
+						for(File file : cur.listFiles())
+							if (!file.isDirectory())
+								file.delete();
+						
+						System.exit(0);
+						
+						break;
+					case JOptionPane.CANCEL_OPTION:
+						break;
+					}
+			    	
+			    	File cur = new File("src" + File.separator + "current_session");
+			    	
+			    	for(File file: cur.listFiles()) 
+			    	    if (!file.isDirectory()) 
+			    	        file.delete();
+			    	
+			    	System.exit(0);
 		    }
 		});
 		
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		//setLocationRelativeTo(null);
 		setSize(1000, 1000);
 		setResizable(false);
 		//pack();
 		setVisible(true);
 		
-		//show save prompt
-		JOptionPane.showMessageDialog(this, "You need to choose a save file path and name!");
+	}
+	
+	private void loadLevel(String path) 
+	/*
+	 * Loads a created level
+	 */
+	{
 		
-		JFileChooser fc = new JFileChooser();
-		int returnVal = fc.showSaveDialog(this);
-		
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			grid.setSavePath(fc.getSelectedFile().getAbsolutePath());
-		}
 	}
 	
 	private void dataDecision(String text) {

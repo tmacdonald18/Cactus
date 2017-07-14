@@ -87,7 +87,13 @@ class Tile extends JPanel implements MouseListener {
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
+		if (e.getModifiers() == MouseEvent.BUTTON1_MASK && this.listener != null) {
+			listener.textEmitted(this.row + "," + this.col);
+		} else if (e.getModifiers() == MouseEvent.BUTTON3_MASK) {
+			this.image = null;
+		}
 		
+		repaint();
 	}
 
 	@Override
