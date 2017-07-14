@@ -40,19 +40,6 @@ class Tile extends JPanel implements MouseListener {
 		setPreferredSize(new Dimension(width, width));
 	}
 	
-	public BufferedImage convertToImage(String path)
-	/*
-	 * Takes String path and converts it to an image
-	 */
-	{
-		try {                
-				return ImageIO.read(getClass().getResource(path));
-	       } catch (IOException ex) {
-	            System.out.println(ex.getMessage());
-	            return null;
-	       }
-	}
-	
 	public BufferedImage getImage() {
 		return image;
 	}
@@ -69,9 +56,9 @@ class Tile extends JPanel implements MouseListener {
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		if (image != null)
+		if (image != null) {
 			g.drawImage(image, 0, 0, this);
-		else {
+		} else {
 			g.setColor(Color.WHITE);
 			g.fillRect(0, 0, width, width);
 		}

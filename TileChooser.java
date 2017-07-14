@@ -29,7 +29,7 @@ public class TileChooser extends JPanel {
 		this.tilesetPath = tilesetPath;
 		this.numTiles = splitTileset();
 		
-		miniGrid = new GridUI(rows, cols, "mini");
+		miniGrid = new GridUI(rows, cols, "mini", null);
 		miniGrid.setStringListener(new StringListener(){
 
 			@Override

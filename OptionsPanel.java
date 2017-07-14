@@ -1,5 +1,5 @@
 import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
+import java.awt.Dimension;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -11,17 +11,19 @@ public class OptionsPanel extends JPanel {
 	private JTextField rows, cols, width;
 	private DataTextPanel data;
 	private TileChooser tileChooser;
+	private String tilesetPath;
 	
 	private StringListener selectionListener;
 	
-	public OptionsPanel()
+	public OptionsPanel(String path)
 	/*
 	 * This is a constructor
 	 */
 	{
 		//data = new DataTextPanel();
 		//tileChooser = new TileChooser("C:\\Users\\Tyler\\Desktop\\test.png");
-		tileChooser = new TileChooser("C:\\Users\\n0286782\\Desktop\\test.png");
+		this.tilesetPath = path;
+		tileChooser = new TileChooser(tilesetPath);
 		tileChooser.setStringListener(new StringListener(){
 
 			@Override
@@ -36,6 +38,10 @@ public class OptionsPanel extends JPanel {
 		//add(data, BorderLayout.NORTH);
 		
 		add(tileChooser, BorderLayout.CENTER);
+		
+		Dimension d = this.getPreferredSize();
+		d.width = 300;
+		setPreferredSize(d);
 	}
 
 	public DataTextPanel getData() {
@@ -52,5 +58,9 @@ public class OptionsPanel extends JPanel {
 	
 	public TileChooser getTileChooser() {
 		return this.tileChooser;
+	}
+	
+	public void setTilesetPath(String path) {
+		this.tilesetPath = path;
 	}
 }

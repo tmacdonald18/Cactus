@@ -1,3 +1,4 @@
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -16,8 +17,9 @@ public class GridUI extends JPanel {
 	private String selectedPath;
 	private StringListener gridListener;
 	private String savePath;
+	private BufferedImage[] images;
 	
-	public GridUI(int rows, int cols, final String type) 
+	public GridUI(int rows, int cols, final String type, BufferedImage[] images) 
 	/*
 	 * Constructor
 	 */
@@ -27,6 +29,7 @@ public class GridUI extends JPanel {
 			this.cols = cols;
 			this.tileWidth = 32;
 			this.savePath = "default.png";
+			this.images = images;
 			
 			setLayout(new GridBagLayout());
 			GridBagConstraints gc = new GridBagConstraints();
@@ -38,13 +41,24 @@ public class GridUI extends JPanel {
 			
 			tiles = new Tile[rows][cols];
 			
+			int counter = 0;
+			
+			System.out.println(images.length);
+			
 			//initialize tiles
 			for (int i = 0; i < rows; i++) {
 				gc.gridx = i;
 				for (int j = 0; j < cols; j++) {
 					gc.gridy = j;
 					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j);
+					
+					if (images != null) {
+						tiles[i][j].setImage(images[counter]);
+						System.out.println("setting image");
+					}
+					
 					add(tiles[i][j], gc);
+					counter++;
 					tiles[i][j].setStringListener(new StringListener(){
 	
 						@Override

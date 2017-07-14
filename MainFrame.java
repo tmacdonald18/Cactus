@@ -1,14 +1,16 @@
+import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
-import javax.swing.GroupLayout;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 
 public class MainFrame extends JFrame {
@@ -18,9 +20,13 @@ public class MainFrame extends JFrame {
 	private GridUI grid;
 	private OptionsPanel options;
 	
+	private String tilesetPath = "";
+	private String loadPath = "";
 	private JScrollPane scroll;
-	
+	private Loader ld;
 	private BufferedImage selectedImage = null;
+	
+	private boolean loading = false;
 	
 	public MainFrame()
 	/*
@@ -29,19 +35,36 @@ public class MainFrame extends JFrame {
 	{
 		super("Cactus");
 		
+		//set look and feel
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 		//Need to choose to load a level or create a new one
-		Object[] choice = {"New", "Load"};
+		Object[] choice = {"Create New", "Load Level"};
 		int n = JOptionPane.showOptionDialog(null, "Are you creating a new level or loading one?", "Start up", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, choice, choice[1]);
+		
+		JFileChooser fc = new JFileChooser();
 		
 		switch(n){
 		case JOptionPane.NO_OPTION:
 			//loading a level
-			JFileChooser fc = new JFileChooser();
-			int result = fc.showOpenDialog(null);
-
+			
+			int result = fc.showOpenDialog(null);				
+			
 			if (result == JFileChooser.APPROVE_OPTION) {
-				String loadPath = fc.getSelectedFile().getAbsolutePath();
-				//loadLevel(loadPath);
+				loadPath = fc.getSelectedFile().getAbsolutePath();
+				ld = new Loader(loadPath);
+				loading = true;
+				
+				JOptionPane.showMessageDialog(null, "Now you need to select the tileset filepath.");
+				int result2 = fc.showOpenDialog(null);
+				
+				if (result2 == JFileChooser.APPROVE_OPTION) {
+					tilesetPath = fc.getSelectedFile().getAbsolutePath();
+				}
 			}
 
 			break;
@@ -53,12 +76,27 @@ public class MainFrame extends JFrame {
 			this.ROW_COUNT = Integer.parseInt(s.split(",")[0].replace(" ", ""));
 			this.COLUMN_COUNT = Integer.parseInt(s.split(",")[1].replace(" ", ""));
 			
+			JOptionPane.showMessageDialog(null, "Now you need to select the tileset filepath.");
+			int result2 = fc.showOpenDialog(null);
+			
+			if (result2 == JFileChooser.APPROVE_OPTION) {
+				tilesetPath = fc.getSelectedFile().getAbsolutePath();
+			}
+			
+			break;
+		case JOptionPane.CLOSED_OPTION:
+			System.exit(0);
 			break;
 		}
 		
 		JPanel gridContainer = new JPanel();
 		gridContainer.setLayout(new GridBagLayout());
-		grid = new GridUI(ROW_COUNT, COLUMN_COUNT, "regular");
+		
+		if (loading)
+			grid = new GridUI(ld.getRows(), ld.getCols(), "regular", ld.loadMap());
+		else
+			grid = new GridUI(ROW_COUNT, COLUMN_COUNT, "regular", null);
+		
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.fill = GridBagConstraints.NONE;
 		gc.weightx = 1;
@@ -68,7 +106,7 @@ public class MainFrame extends JFrame {
 		gridContainer.add(grid, gc);
 		gridContainer.setBorder(new TitledBorder("Level Designer"));
 		
-		options = new OptionsPanel();
+		options = new OptionsPanel(tilesetPath);
 		options.setBorder(new TitledBorder("Tile Selector"));
 		
 		StringListener dataDecider = new StringListener(){
@@ -81,23 +119,14 @@ public class MainFrame extends JFrame {
 		options.setStringListener(dataDecider);
 		grid.setStringListener(dataDecider);
 		
-		GroupLayout layout = new GroupLayout(this.getContentPane());
-		this.getContentPane().setLayout(layout);
-		layout.setAutoCreateGaps(true);
-		layout.setAutoCreateContainerGaps(true);
-		
 		scroll = new JScrollPane(gridContainer);
 		
-		layout.setHorizontalGroup(layout.createSequentialGroup()
-				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER))
-					.addComponent(options, 222, GroupLayout.DEFAULT_SIZE, 222)
-					.addComponent(scroll, 0, GroupLayout.DEFAULT_SIZE, 1000)
-		);
-		
-		layout.setVerticalGroup(layout.createParallelGroup()
-				.addComponent(options)
-				.addComponent(scroll, 0, GroupLayout.DEFAULT_SIZE, 1000)
-		);
+		JSplitPane jp = new JSplitPane();
+		jp.setLeftComponent(options);
+		jp.setRightComponent(scroll);
+		jp.getLeftComponent().setMinimumSize(options.getPreferredSize());
+		this.getContentPane().setLayout(new BorderLayout());
+		this.getContentPane().add(jp, BorderLayout.CENTER);
 		
 		addWindowListener(new java.awt.event.WindowAdapter() {
 		    @Override
@@ -107,7 +136,10 @@ public class MainFrame extends JFrame {
 		    	
 		    	//show save prompt
 		    	Object[] options = {"Yes", "No", "Cancel"};
-				int answer = JOptionPane.showOptionDialog(null, "Would you like to save?", "Save?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2]);
+				int answer = JOptionPane.CLOSED_OPTION;
+		    	
+				while(answer == JOptionPane.CLOSED_OPTION)
+					answer = JOptionPane.showOptionDialog(null, "Would you like to save?", "Save?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2]);
 				
 				switch(answer) {
 					case JOptionPane.YES_OPTION:
@@ -127,27 +159,25 @@ public class MainFrame extends JFrame {
 							if (!file.isDirectory())
 								file.delete();
 						
+						File current = new File("src" + File.separator + "current_session");
+				    	
+				    	for(File file: current.listFiles()) 
+				    	    if (!file.isDirectory()) 
+				    	        file.delete();
+						
 						System.exit(0);
 						
 						break;
 					case JOptionPane.CANCEL_OPTION:
 						break;
 					}
-			    	
-			    	File cur = new File("src" + File.separator + "current_session");
-			    	
-			    	for(File file: cur.listFiles()) 
-			    	    if (!file.isDirectory()) 
-			    	        file.delete();
-			    	
-			    	System.exit(0);
 		    }
 		});
 		
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		//setLocationRelativeTo(null);
 		setSize(1000, 1000);
-		setResizable(false);
+		//setResizable(false);
 		//pack();
 		setVisible(true);
 		
