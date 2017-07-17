@@ -1,6 +1,8 @@
 import java.awt.BorderLayout;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -9,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -19,13 +22,18 @@ public class TileChooser extends JPanel {
 	private BufferedImage[] images;
 	private StringListener choiceListener;
 	
-	private int numTiles, rows, cols;
+	
+	
+	private int numTiles, rows, cols, prevRow, prevCol;
 	
 	public TileChooser(String tilesetPath)
 	/*
 	 * Constructor
 	 */
 	{
+		prevRow = -1;
+		prevCol = -1;
+		
 		this.tilesetPath = tilesetPath;
 		this.numTiles = splitTileset();
 		
@@ -50,6 +58,18 @@ public class TileChooser extends JPanel {
 		
 		setLayout(new BorderLayout());
 		
+		JButton btn = new JButton("Clear Selection");
+		btn.setMnemonic(KeyEvent.VK_A);
+		btn.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				choiceListener.textEmitted("clear");
+			}
+			
+		});
+		
+		add(btn, BorderLayout.NORTH);
 		add(new JScrollPane(miniGrid), BorderLayout.CENTER);
 		
 	}
@@ -132,7 +152,8 @@ public class TileChooser extends JPanel {
 	/*
 	 * Given a tile row and column should return the associated BufferedImage from images
 	 */
-	{
+	{		
+		
 		int counter = 0;
 		int selection = 0;
 		
@@ -144,10 +165,19 @@ public class TileChooser extends JPanel {
 			}
 		}
 		
+		miniGrid.getTile(row, col).setSelected(true);
+		
+		prevRow = row;
+		prevCol = col;
+		
 		return images[selection];
 	}
 	
 	public void setStringListener(StringListener listener) {
 		this.choiceListener = listener;
+	}
+
+	public GridUI getGrid() {
+		return this.miniGrid;
 	}
 }

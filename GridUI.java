@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -43,14 +42,14 @@ public class GridUI extends JPanel {
 			
 			int counter = 0;
 			
-			System.out.println(images.length);
+			//System.out.println(images.length);
 			
 			//initialize tiles
 			for (int i = 0; i < rows; i++) {
 				gc.gridx = i;
 				for (int j = 0; j < cols; j++) {
 					gc.gridy = j;
-					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j);
+					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j, type);
 					
 					if (images != null) {
 						tiles[i][j].setImage(images[counter]);
@@ -83,7 +82,7 @@ public class GridUI extends JPanel {
 			//initialize tiles
 			for (int i = 0; i < rows; i++) {
 				for (int j = 0; j < cols; j++) {
-					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j);
+					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j, type);
 					add(tiles[i][j]);
 					tiles[i][j].setStringListener(new StringListener(){
 	
@@ -130,7 +129,7 @@ public class GridUI extends JPanel {
 	 * This is the save function which will combine all of the tiles into one giant PNG bitmap image
 	 */
 	{
-		BufferedImage result = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage result = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_4BYTE_ABGR);
 		Graphics g = result.getGraphics();
 		
 		for (int i = 0; i < rows; i++) {
@@ -148,5 +147,15 @@ public class GridUI extends JPanel {
 		}
 	}
 	
-
+	public void setAllUnselected()
+	/*
+	 * At the moment just loops through all of the tiles
+	 * But eventually, it should only loop throught the hashmap of selected tiles
+	 */
+	{
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++)
+				tiles[i][j].setSelected(false);
+		}
+	}
 }

@@ -14,13 +14,16 @@ class Tile extends JPanel implements MouseListener {
 	
 	private int xMin, yMin, width, layer, row, col;
 	private boolean collision;
+	private boolean selected = false;
+	
+	private String type;
 	
 	private String imagePath;
 	private BufferedImage image;
 	
 	private StringListener listener;
 	
-	public Tile(int x, int y, int width, int row, int col)
+	public Tile(int x, int y, int width, int row, int col, String type)
 	/*
 	 * Default Constructor for a tile
 	 */
@@ -34,6 +37,7 @@ class Tile extends JPanel implements MouseListener {
 		this.layer = 0;	
 		this.row = row;
 		this.col = col;
+		this.type = type;
 		
 		addMouseListener(this);
 		
@@ -46,7 +50,7 @@ class Tile extends JPanel implements MouseListener {
 
 	public void setImage(BufferedImage image) {
 		this.image = image;
-	
+		repaint();
 	}
 
 	public void setStringListener(StringListener listener) {
@@ -63,6 +67,11 @@ class Tile extends JPanel implements MouseListener {
 			g.fillRect(0, 0, width, width);
 		}
 		
+		if (selected) {
+			g.setColor(new Color(135, 206, 235, 225));
+			g.fillRect(0, 0, width, width);
+		}
+		
 		g.setColor(Color.BLACK);
 		g.drawRect(0, 0, width, width);
 	}
@@ -75,8 +84,8 @@ class Tile extends JPanel implements MouseListener {
 	@Override
 	public void mouseEntered(MouseEvent e) {
 		if (e.getModifiers() == MouseEvent.BUTTON1_MASK && this.listener != null) {
-			listener.textEmitted(this.row + "," + this.col);
-		} else if (e.getModifiers() == MouseEvent.BUTTON3_MASK) {
+			listener.textEmitted(this.row + "," + this.col + ",dragged");
+		} else if (e.getModifiers() == MouseEvent.BUTTON3_MASK && this.type == "regular") {
 			this.image = null;
 		}
 		
@@ -91,8 +100,8 @@ class Tile extends JPanel implements MouseListener {
 	@Override
 	public void mousePressed(MouseEvent e) {		
 		if (e.getButton() == MouseEvent.BUTTON1 && this.listener != null) {
-			listener.textEmitted(this.row + "," + this.col);
-		} else if (e.getButton() == MouseEvent.BUTTON3) {
+			listener.textEmitted(this.row + "," + this.col + ",clicked");
+		} else if (e.getButton() == MouseEvent.BUTTON3 && this.type == "regular") {
 			this.image = null;
 		}
 		
@@ -158,6 +167,15 @@ class Tile extends JPanel implements MouseListener {
 
 	public void setImagePath(String imagePath) {
 		this.imagePath = imagePath;
+	}
+
+	public boolean isSelected() {
+		return selected;
+	}
+
+	public void setSelected(boolean selected) {
+		this.selected = selected;
+		repaint();
 	}
 	
 	

@@ -3,6 +3,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -10,6 +12,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 
@@ -24,7 +27,9 @@ public class MainFrame extends JFrame {
 	private String loadPath = "";
 	private JScrollPane scroll;
 	private Loader ld;
-	private BufferedImage selectedImage = null;
+	
+	//this hashmap should contain all of the currently selected tile images based on row and column
+	private HashMap<Integer, HashMap<Integer, BufferedImage>> selectedRows = new HashMap<Integer, HashMap<Integer, BufferedImage>>();
 	
 	private boolean loading = false;
 	
@@ -121,8 +126,14 @@ public class MainFrame extends JFrame {
 		
 		scroll = new JScrollPane(gridContainer);
 		
+		JTabbedPane jt = new JTabbedPane();
+		jt.addTab("Tileset", options);
+		
+		Settings settings = new Settings();
+		jt.addTab("Settings", settings);
+		
 		JSplitPane jp = new JSplitPane();
-		jp.setLeftComponent(options);
+		jp.setLeftComponent(jt);
 		jp.setRightComponent(scroll);
 		jp.getLeftComponent().setMinimumSize(options.getPreferredSize());
 		this.getContentPane().setLayout(new BorderLayout());
@@ -183,31 +194,85 @@ public class MainFrame extends JFrame {
 		
 	}
 	
-	private void loadLevel(String path) 
-	/*
-	 * Loads a created level
-	 */
-	{
-		
-	}
-	
 	private void dataDecision(String text) {
-		String[] data = text.split(",");
-		String type = data[0];
-		int row = Integer.parseInt(data[1]);
-		int col = Integer.parseInt(data[2]);
 		
-		System.out.println(type + " " + row + " " + col);
+		if (text.contains("clear")) {
+			//clear out the selected tiles
+			selectedRows.clear();
+			options.getTileChooser().getGrid().setAllUnselected();
+		} else {
 		
-		if (type.contains("mini")) {
-			selectedImage = options.getTileChooser().getSpecficImage(row, col);
-			System.out.println("The new selected image is: " + selectedImage.toString());
-		} else if (type.contains("regular")) {
-			if (selectedImage != null) {
-				System.out.println("Setting tile to " + selectedImage.toString());
-				grid.getTile(row, col).setImage(selectedImage);
-			} else
-				System.out.println("Looks like there is no selected image");
+			String[] data = text.split(",");
+			String type = data[0];
+			int row = Integer.parseInt(data[1]);
+			int col = Integer.parseInt(data[2]);
+			String mouseType = data[3];
+			
+			System.out.println(type + " " + row + " " + col);
+			if (type.contains("mini")) {
+				
+				boolean empty = selectedRows.isEmpty();
+				
+				if (empty || (!empty && mouseType.contains("dragged"))) {
+				
+					//if the row is not found, then create a new key and supplementary hashmap
+					if (!selectedRows.containsKey(row)) {
+						HashMap<Integer, BufferedImage> selectedColumns = new HashMap<Integer, BufferedImage>();
+						selectedRows.put(row, selectedColumns);
+					} 
+					
+					selectedRows.get(row).put(col, options.getTileChooser().getSpecficImage(row, col));
+				
+				} else if (!empty && mouseType.contains("clicked")) {
+					selectedRows.clear();
+					options.getTileChooser().getGrid().setAllUnselected();
+					HashMap<Integer, BufferedImage> selectedColumns = new HashMap<Integer, BufferedImage>();
+					selectedRows.put(row, selectedColumns);
+					selectedRows.get(row).put(col, options.getTileChooser().getSpecficImage(row, col));
+				}
+				
+			} else if (type.contains("regular")) {
+				if (!selectedRows.isEmpty()) {
+					
+					Object[] rowKeys = selectedRows.keySet().toArray();
+					Arrays.sort(rowKeys);
+					
+					int rowOffset = 0, colOffset = 0;
+					
+					for (int i = 0; i < rowKeys.length; i++) {
+						System.out.println("This row is: " + rowKeys[i] + " and has the following columns selected: ");
+						Object[] colKeys = selectedRows.get(rowKeys[i]).keySet().toArray();
+						Arrays.sort(colKeys);
+						
+						//calculate row offset
+						if (i != 0) {
+							colOffset = (int) rowKeys[i] - (int) rowKeys[0];
+							System.out.println("Changing the column offset to: " + colOffset);
+						}
+						
+						for (int j = 0; j < colKeys.length; j++) {
+							
+							if (j != 0) {
+								rowOffset = (int) colKeys[j] - (int) colKeys[0];
+								System.out.println("Changing the row offset to: " + rowOffset);
+							}
+							
+							System.out.println("Setting Tile at: " + (row + rowOffset) + " and " + (col + colOffset));
+							
+							try {
+								grid.getTile(row+rowOffset, col+colOffset).setImage(selectedRows.get(rowKeys[i]).get(colKeys[j]));
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						
+						}
+						rowOffset = 0;
+						colOffset = 0;
+					}
+					
+				} else
+					System.out.println("Looks like there is no selected image");
+			}
 		}
 	}
 }
