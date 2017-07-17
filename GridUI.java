@@ -3,6 +3,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
@@ -52,7 +54,7 @@ public class GridUI extends JPanel {
 					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j, type);
 					
 					if (images != null) {
-						tiles[i][j].setImage(images[counter]);
+						tiles[i][j].setImage(images[counter], 0);
 						System.out.println("setting image");
 					}
 					
@@ -127,14 +129,15 @@ public class GridUI extends JPanel {
 	public void saveGrid()
 	/*
 	 * This is the save function which will combine all of the tiles into one giant PNG bitmap image
+	 * Should save each layer as a separate PNG
 	 */
 	{
-		BufferedImage result = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_4BYTE_ABGR);
+		BufferedImage result = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = result.getGraphics();
 		
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
-				BufferedImage temp = tiles[i][j].getImage();
+				BufferedImage temp = tiles[i][j].getImage(0);
 				g.drawImage(temp, i * this.tileWidth, j * this.tileWidth, null);
 			}
 		}
@@ -150,7 +153,7 @@ public class GridUI extends JPanel {
 	public void setAllUnselected()
 	/*
 	 * At the moment just loops through all of the tiles
-	 * But eventually, it should only loop throught the hashmap of selected tiles
+	 * But eventually, it should only loop through the hashmap of selected tiles
 	 */
 	{
 		for (int i = 0; i < rows; i++) {

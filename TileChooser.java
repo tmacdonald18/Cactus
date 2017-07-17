@@ -51,7 +51,7 @@ public class TileChooser extends JPanel {
 		
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
-				miniGrid.getTile(i, j).setImage(scale(images[counter], BufferedImage.TYPE_INT_ARGB, 64, 64, 2.0, 2.0));
+				miniGrid.getTile(i, j).setImage(scale(images[counter], BufferedImage.TYPE_INT_ARGB, 64, 64, 2.0, 2.0), 0);
 				counter++;
 			}
 		}
@@ -120,7 +120,7 @@ public class TileChooser extends JPanel {
         for (int x = 0; x < rows; x++) {
             for (int y = 0; y < cols; y++) {
                 //Initialize the image array with image chunks
-                imgs[count] = new BufferedImage(chunkWidth, chunkHeight, image.getType());
+                imgs[count] = new BufferedImage(chunkWidth, chunkHeight, BufferedImage.TYPE_INT_ARGB);
 
                 // draws the image chunk
                 Graphics2D gr = imgs[count++].createGraphics();
