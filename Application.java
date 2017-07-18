@@ -1,14 +1,19 @@
-import java.io.File;
+/*
+ * Application.java
+ * Author:  Tyler MacDonald
+ * Email:	tcmacd18@g.holycross.edu
+ * Purpose:	Initialize MainFrame and run the program in a SwingUtilities thread
+ * Post:	Program is started and message box prompts appear
+ */
 
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 
 public class Application {
 	
 	public static void main(String[] args) {
 		
-		//Main Program frame
+		//Run MainFrame in a thread, separates the main function from the frame functionality
 		SwingUtilities.invokeLater(new Runnable(){
 
 			@Override

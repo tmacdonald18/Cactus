@@ -1,10 +1,17 @@
+/*
+ * GridUI.java
+ * Author:	Tyler MacDonald
+ * Email:	tcmacd18@g.holycross.edu
+ * Purpose:	Used as a container for Tile objects.
+ * 			Primarily used to retrieve a specific Tile, or perform mass operations on all of the Tiles.
+ * 			Also contains the function for saving.
+ */
+
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
@@ -13,24 +20,53 @@ import javax.swing.JPanel;
 
 public class GridUI extends JPanel {
 
+	//Tile object matrix
 	private Tile[][] tiles;
-	private int rows, cols, tileWidth;
-	private String selectedPath;
-	private StringListener gridListener;
+	
+	//Holds the number of rows and columns as defined by the constructor
+	private int rows, cols;
+	
+	//Holds the width of the tiles
+	//32 for the regular grid, and 64 for the tile selector
+	private int tileWidth;
+	
+	//The path to export the grid to (for the save functionality)
 	private String savePath;
-	private BufferedImage[] images;
+	
+	//Type of grid to be created
+	private String type;
+	
+	//Allows for String messages to be intercepted from Tiles and Interpreted by the MainFrame
+	private StringListener gridListener;
+	private StringListener sl;
 	
 	public GridUI(int rows, int cols, final String type, BufferedImage[] images) 
 	/*
-	 * Constructor
+	 * Constructor for a GridUI
+	 * Parameters:
+	 * 		rows -- Number of rows the grid will have
+	 * 		cols --	Number of columns the grid will have
+	 * 		type --	Whether the grid is regular, or tile chooser
+	 * 		images -- Only used for load functionality, under the assumption that a new grid will be created when loading
 	 */
 	{
+		//assign parameters to object data
+		this.rows = rows;
+		this.cols = cols;
+		this.type = type;
+		
+		//create StringListener for transmitting Tile events
+		sl = new StringListener(){
+
+			@Override
+			public void textEmitted(String text) {
+				gridListener.textEmitted(type + "," + text);
+			}
+			
+		};
+		
 		if (type == "regular") {
-			this.rows = rows;
-			this.cols = cols;
 			this.tileWidth = 32;
-			this.savePath = "default.png";
-			this.images = images;
 			
 			setLayout(new GridBagLayout());
 			GridBagConstraints gc = new GridBagConstraints();
@@ -40,74 +76,69 @@ public class GridUI extends JPanel {
 			gc.fill = GridBagConstraints.NONE;
 			gc.anchor = GridBagConstraints.CENTER;
 			
+			//initialize tiles
 			tiles = new Tile[rows][cols];
 			
-			int counter = 0;
+			//build the grid
+			buildLevelGrid(gc);
 			
-			//System.out.println(images.length);
-			
-			//initialize tiles
-			for (int i = 0; i < rows; i++) {
-				gc.gridx = i;
-				for (int j = 0; j < cols; j++) {
-					gc.gridy = j;
-					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j, type);
-					
-					if (images != null) {
-						tiles[i][j].setImage(images[counter], 0);
-						System.out.println("setting image");
-					}
-					
-					add(tiles[i][j], gc);
-					counter++;
-					tiles[i][j].setStringListener(new StringListener(){
-	
-						@Override
-						public void textEmitted(String text) {
-							gridListener.textEmitted(type + "," + text);
-						}
-						
-					});
-				}
-			}
-			
-			//setPreferredSize(new Dimension(rows * 32, cols * 32));
 		} else if (type == "mini") {
-			this.rows = rows;
-			this.cols = cols;
 			this.tileWidth = 64;
 			
 			setLayout(new GridLayout(rows, cols));
 			
+			//initialize tiles
 			tiles = new Tile[rows][cols];
 			
-			//initialize tiles
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < cols; j++) {
-					tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j, type);
-					add(tiles[i][j]);
-					tiles[i][j].setStringListener(new StringListener(){
+			//build the grid
+			buildTileChooserGrid();
+			
+		}
+	}
 	
-						@Override
-						public void textEmitted(String text) {
-							gridListener.textEmitted(type + "," + text);
-						}
-						
-					});
-				}
+	private void buildTileChooserGrid()
+	/*
+	 * Adds all tiles to the level builder grid using Grid Layout
+	 * Post: Grid has been created and added to the JPanel layout
+	 * TODO: Change this to work with GridBagLayout
+	 */
+	{
+		//for each matrix position, create a new tile of the appropriate tile width, location, and type
+		//then add the Tile to the layout and set a StringListener to it
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j, type);
+				add(tiles[i][j]);
+				tiles[i][j].setStringListener(sl);
 			}
 		}
 	}
 	
-	public String getSelectedPath() {
-		return selectedPath;
+	private void buildLevelGrid(GridBagConstraints gc)
+	/*
+	 * Adds all tiles to the level designer grid using a predefined GridBagConstraints and using the GridBagLayout
+	 * POST: Grid has been created and added to the JPanel Layout
+	 */
+	{		
+		//for each matrix position, create a new tile of the appropriate tile width, location, and type
+		//then add the Tile to the layout and set a StringListener to it
+		for (int i = 0; i < rows; i++) {
+			gc.gridx = i;
+			for (int j = 0; j < cols; j++) {
+				gc.gridy = j;
+				tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j, type);
+				
+				add(tiles[i][j], gc);
+				tiles[i][j].setStringListener(sl);
+			}
+		}
 	}
 
-	public void setSelectedPath(String selectedPath) {
-		this.selectedPath = selectedPath;
-	}
-
-	public void setStringListener(StringListener listener) {
+	public void setStringListener(StringListener listener) 
+	/*
+	 * Sets the GridUI string listener
+	 */
+	{
 		this.gridListener = listener;
 	}
 	
@@ -119,41 +150,61 @@ public class GridUI extends JPanel {
 		return this.tiles[i][j];
 	}
 	
-	public void setSavePath(String path) {
-		if (!path.endsWith(".png"))
-			path = path + ".png";
-		
+	public void setSavePath(String path) 
+	/*
+	 * Sets the save path
+	 */
+	{		
 		this.savePath = path;
 	}
 	
-	public void saveGrid()
+	public void saveGrid(int numLayers)
 	/*
 	 * This is the save function which will combine all of the tiles into one giant PNG bitmap image
-	 * Should save each layer as a separate PNG
 	 */
 	{
 		BufferedImage result = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = result.getGraphics();
 		
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				BufferedImage temp = tiles[i][j].getImage(0);
-				g.drawImage(temp, i * this.tileWidth, j * this.tileWidth, null);
-			}
+		//first make sure the save path does not yet have an extension
+		String path = this.savePath;
+		if (path.endsWith(".png"))
+			path = path.replace(".png", "");
+		
+		for (int i = 0; i < numLayers; i++) {
+			result = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_INT_ARGB);
+			g = result.getGraphics();
+			drawLayer(g, i);
+			
+			//write to file
+			try {
+				ImageIO.write(result, "png", new File(path + "_" + i + ".png"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}	
 		}
 		
-		try {
-			ImageIO.write(result, "png", new File(this.savePath));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	}
+	
+	private void drawLayer(Graphics g, int layer)
+	/*
+	 * Helped function for drawing each layer to a BufferedImage
+	 */
+	{
+		BufferedImage temp;
+		
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				temp = tiles[i][j].getImage(i);
+				g.drawImage(temp, i * this.tileWidth, j * this.tileWidth, null);
+			}
 		}
 	}
 	
 	public void setAllUnselected()
 	/*
 	 * At the moment just loops through all of the tiles
-	 * But eventually, it should only loop through the hashmap of selected tiles
+	 * TODO: Eventually, it should only loop through the hashmap of selected tiles
 	 */
 	{
 		for (int i = 0; i < rows; i++) {

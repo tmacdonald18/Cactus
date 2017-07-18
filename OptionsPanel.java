@@ -9,7 +9,6 @@ public class OptionsPanel extends JPanel {
 
 	private JButton insert, delete, resize;
 	private JTextField rows, cols, width;
-	private DataTextPanel data;
 	private TileChooser tileChooser;
 	private String tilesetPath;
 	
@@ -42,14 +41,6 @@ public class OptionsPanel extends JPanel {
 		Dimension d = this.getPreferredSize();
 		d.width = 300;
 		setPreferredSize(d);
-	}
-
-	public DataTextPanel getData() {
-		return data;
-	}
-
-	public void setData(DataTextPanel data) {
-		this.data = data;
 	}
 
 	public void setStringListener(StringListener listener) {
