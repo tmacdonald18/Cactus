@@ -1,1 +1,3 @@
 V1
+
+In same directory as executable, make a folder "src" and within that folder make a folder "current_session"
