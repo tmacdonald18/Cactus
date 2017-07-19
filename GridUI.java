@@ -161,6 +161,7 @@ public class GridUI extends JPanel {
 	public void saveGrid(int numLayers)
 	/*
 	 * This is the save function which will combine all of the tiles into one giant PNG bitmap image
+	 * TODO: Create an XML data storage file as part of the save file, might even be able to combine the two?
 	 */
 	{
 		BufferedImage result = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_INT_ARGB);

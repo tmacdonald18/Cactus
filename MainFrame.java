@@ -12,6 +12,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Arrays;
@@ -39,7 +41,11 @@ public class MainFrame extends JFrame {
 	private OptionsPanel tileChooserContainer;
 	
 	//Holds the levelBuilderGrid
-	private JScrollPane scroll;
+	private JScrollPane levelScroll;
+	
+	//True if user is scrolling, false if user is not scrolling
+	//Should only be able to paint on UI if scrolling is false
+	private boolean scrolling = false;
 	
 	//The path to the tileset currently chosen to be used
 	//Initialized as "continue" in order to maintain a user error check while loop used later
@@ -110,12 +116,29 @@ public class MainFrame extends JFrame {
 		levelBuilderGrid.setStringListener(dataDecider);
 		
 		//Initialize the level builder container inside of a scroll pane
-		scroll = new JScrollPane(gridContainer);
+		levelScroll = new JScrollPane(gridContainer);
 		
+		//Create an adjustment listener to keep track of when the user is scrolling either pane
+		AdjustmentListener scrollListener = new AdjustmentListener() {
+
+			@Override
+			public void adjustmentValueChanged(AdjustmentEvent event) {
+				scrolling = event.getValueIsAdjusting();
+				System.out.println(scrolling);
+			}
+			
+		};
+		
+		//Assign scrollListener to both scroll bars
+		levelScroll.getHorizontalScrollBar().addAdjustmentListener(scrollListener);
+		levelScroll.getVerticalScrollBar().addAdjustmentListener(scrollListener);
+				
 		//Create a Settings Component
 		Settings settings = new Settings();
 		settings.setStringListener(dataDecider);
 		
+		//Assign scrollListener to the TileChooser scroll bars
+		tileChooserContainer.getTileChooser().setAdjustmentListeners(scrollListener);
 		
 		//Create a tabbed pane to hold Panels other than the level builder
 		JTabbedPane jt = new JTabbedPane();
@@ -125,7 +148,7 @@ public class MainFrame extends JFrame {
 		//Create the split pane which will allow the user to control component sizes
 		JSplitPane jp = new JSplitPane();
 		jp.setLeftComponent(jt);
-		jp.setRightComponent(scroll);
+		jp.setRightComponent(levelScroll);
 		jp.getLeftComponent().setMinimumSize(tileChooserContainer.getPreferredSize());
 		
 		//Put everything onto the JFrame content pane
@@ -266,7 +289,7 @@ public class MainFrame extends JFrame {
 		if (text.contains("clear")) {
 			clearOutSelection();			
 		
-		} else {
+		} else if (!scrolling) {
 		
 			//Split the text at commas, since each data segment is separated by a comma
 			String[] data = text.split(",");

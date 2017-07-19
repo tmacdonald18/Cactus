@@ -6,6 +6,12 @@
  * Post:	Program is started and message box prompts appear
  */
 
+/*
+ * Cactus
+ * A not-so-prickly solution to 2D game development
+ */
+
+
 import javax.swing.SwingUtilities;
 
 

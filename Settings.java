@@ -1,4 +1,11 @@
-import java.awt.Color;
+/*
+ * Settings.java
+ * Author:	Tyler MacDonald
+ * Email:	tcmacd18@g.holycross.edu
+ * Purpose:	An interactive settings display that allows the user to choose different options.
+ * 			Allows user to add and select a layer.
+ */
+
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -12,26 +19,36 @@ import javax.swing.JPanel;
 
 public class Settings extends JPanel {
 	
+	//Sends messages from Settings to MainFrame
 	private StringListener selectionListener;
-	private int counter;
-	private JComboBox layerList;
+	
+	//Stores the current number of layers
+	private int totalLayerCount;
+	
+	//JComboBox containing the list of layers
+	//TODO: Change this to a JTable
+	private JComboBox<String> layerList;
 	
 	public Settings()
 	/*
 	 * This is a constructor
 	 */
 	{
-		counter = 0;
+		totalLayerCount = 0;
+		
+		//Define the layers array
 		String[] layers = {"0"};
 		
-		this.layerList = new JComboBox(layers);
-		//layerList.setSelectedIndex(0);
+		//Initialize combo box
+		this.layerList = new JComboBox<String>(layers);
+
+		//ActionListener that sends a message to MainFrame whenever the combo box value is changed
 		layerList.addActionListener(new ActionListener(){
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					JComboBox cb = (JComboBox)e.getSource();
+					JComboBox<Object> cb =  (JComboBox<Object>) e.getSource();
 					selectionListener.textEmitted("layerdecision," + (String)cb.getSelectedItem());
 				} catch (Exception exc) {
 					exc.printStackTrace();
@@ -64,23 +81,27 @@ public class Settings extends JPanel {
 		gc.gridy = 1;
 		
 		JButton addLayer = new JButton("Add Layer");
+		
+		//ActionListener that adds an item to the layer list if clicked
+		//TODO: Change this to work with a table, and have there be an add button and a remove button that adds a new row or removes the highlighted row
 		addLayer.addActionListener(new ActionListener(){
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				counter++;
-				layerList.addItem(Integer.toString(counter));
+				totalLayerCount++;
+				layerList.addItem(Integer.toString(totalLayerCount));
 			}
 			
 		});
 		
 		add(addLayer, gc);
-		
-		//this.setBackground(new Color(179, 255, 179));
-
 	}
 	
-	public void setStringListener(StringListener listener) {
+	public void setStringListener(StringListener listener) 
+	/*
+	 * Sets the selectionListener StringListener to listener
+	 */
+	{
 		this.selectionListener = listener;
 	}
 }
