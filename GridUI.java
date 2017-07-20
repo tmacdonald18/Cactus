@@ -107,7 +107,7 @@ public class GridUI extends JPanel {
 		//then add the Tile to the layout and set a StringListener to it
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
-				tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j, type);
+				tiles[i][j] = new Tile(this.tileWidth, i, j, type);
 				add(tiles[i][j]);
 				tiles[i][j].setStringListener(sl);
 			}
@@ -126,7 +126,7 @@ public class GridUI extends JPanel {
 			gc.gridx = i;
 			for (int j = 0; j < cols; j++) {
 				gc.gridy = j;
-				tiles[i][j] = new Tile(i * this.tileWidth, j * this.tileWidth, this.tileWidth, i, j, type);
+				tiles[i][j] = new Tile(this.tileWidth, i, j, type);
 				
 				add(tiles[i][j], gc);
 				tiles[i][j].setStringListener(sl);

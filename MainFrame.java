@@ -14,7 +14,11 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,6 +32,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 
 public class MainFrame extends JFrame {
 
@@ -59,6 +64,9 @@ public class MainFrame extends JFrame {
 	
 	//This hashmap should contain all of the currently selected tile images based on row and column
 	private HashMap<Integer, HashMap<Integer, BufferedImage>> selectedRows = new HashMap<Integer, HashMap<Integer, BufferedImage>>();
+	
+	//This object is used to display the selection onto the level building grid, without actually permanently setting the tile images
+	private ImageMatrix previewMatrix;
 	
 	public MainFrame()
 	/*
@@ -124,7 +132,6 @@ public class MainFrame extends JFrame {
 			@Override
 			public void adjustmentValueChanged(AdjustmentEvent event) {
 				scrolling = event.getValueIsAdjusting();
-				System.out.println(scrolling);
 			}
 			
 		};
@@ -150,6 +157,43 @@ public class MainFrame extends JFrame {
 		jp.setLeftComponent(jt);
 		jp.setRightComponent(levelScroll);
 		jp.getLeftComponent().setMinimumSize(tileChooserContainer.getPreferredSize());
+				
+		//Add a mouse listener to the split pane divider so that selecting / painting can't happen if split pane is being changed
+		BasicSplitPaneUI bspui = (BasicSplitPaneUI) jp.getUI();
+		bspui.getDivider().addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				System.out.println("Pressing the mouse");
+				scrolling = true;
+				
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				System.out.println("Releasing the mouse");
+				scrolling = false;
+			}
+			
+		});
 		
 		//Put everything onto the JFrame content pane
 		this.getContentPane().setLayout(new BorderLayout());
@@ -312,7 +356,11 @@ public class MainFrame extends JFrame {
 			
 			} else {
 			
-				if (type.contains("mini")) {
+				//If it's the tilechooser and it wants to make a matrix
+				if (type.contains("mini") && tag.contains("makeMatrix")) {
+					previewMatrix = new ImageMatrix(selectedRows);
+					System.out.println(previewMatrix.toString());
+				} else if (type.contains("mini")) {
 					//If the tileChooser is transmitting
 					
 					//Check if hashmap is empty
