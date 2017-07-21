@@ -14,6 +14,8 @@ public class ImageMatrix {
 
 	private BufferedImage[][] matrix;	
 	
+	private int rows, cols;
+	
 	public ImageMatrix(HashMap<Integer, HashMap<Integer, BufferedImage>> mapping)
 	/*
 	 * Constructor that takes a hashmap and creates an ImageMatrix from it
@@ -49,41 +51,51 @@ public class ImageMatrix {
 				colsMin = currentMinResult;
 			
 		}
-			
-		if (colsMin == 0)
-			colsMin = 1;
-		if (rowsMin == 0)
-			rowsMin = 1;
 		
-		int rows = rowsMax - rowsMin - 1;
-		int cols = colsMax - colsMin - 1;
+		rows = (rowsMax - rowsMin) + 1;
+		cols = (colsMax - colsMin) + 1;
 		
 		System.out.println("This many rows: " + rows + " and this many columns: " + cols);
 		
 		matrix = new BufferedImage[rows][cols];
 		
-		int rowKey, colKey;
-		
-		//For each row key, loop through each column key and set the resulting BufferedImage value to the appropriate matrix position
-		for (int i = 0; i < rowKeys.length; i++) {
+		//Set the image matrix's values
+		//For each matrix row, if the hashmap contains that key
+		for (int matrixRow = 0; matrixRow < rows; matrixRow++) {
 			
-			System.out.println("I am on row " + (i+1) + " out of " + rowKeys.length);
+			int rowQuery = matrixRow + rowsMin;
 			
-			colKeys = mapping.get(rowKeys[i]).keySet().toArray();
-			rowKey = (int) rowKeys[i];
-			
-			for (int j = 0; j < colKeys.length; j++) {
-				
-				System.out.println("         I am on column " + (j+1) + " out of " + colKeys.length);
-				colKey = (int) colKeys[j];
-				
-				matrix[i][j] = mapping.get(rowKeys[i]).get(colKeys[j]);
+			if (mapping.containsKey(rowQuery)) {
+				for (int matrixCol = 0; matrixCol < cols; matrixCol++) {
+					
+					int colQuery = matrixCol + colsMin;
+					
+					if (mapping.get(rowQuery).containsKey(colQuery)) {
+						matrix[matrixRow][matrixCol] = mapping.get(rowQuery).get(colQuery);
+					}
+				}
 			}
 		}
+		
 		
 		System.out.println("Image Matrix Created.");
 	}
 
+	public void printThisMatrix() {
+		System.out.println();
+		for (int i = 0; i < rows; i++) {
+			System.out.print("[");
+			for (int j = 0; j < cols; j++) {
+				if (matrix[i][j] == null)
+					System.out.print("0, ");
+				else
+					System.out.print("1, ");
+			}
+			System.out.print("],");
+			System.out.println();
+		}
+	}
+	
 	@Override
 	public String toString() {
 		return "ImageMatrix [matrix=" + Arrays.toString(matrix) + "]";

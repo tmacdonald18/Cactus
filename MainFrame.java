@@ -359,7 +359,7 @@ public class MainFrame extends JFrame {
 				//If it's the tilechooser and it wants to make a matrix
 				if (type.contains("mini") && tag.contains("makeMatrix")) {
 					previewMatrix = new ImageMatrix(selectedRows);
-					System.out.println(previewMatrix.toString());
+					previewMatrix.printThisMatrix();
 				} else if (type.contains("mini")) {
 					//If the tileChooser is transmitting
 					
