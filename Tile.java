@@ -6,6 +6,7 @@
  * 			Listen for user mouse actions.
  */
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -38,6 +39,10 @@ class Tile extends JPanel {
 		
 	//Holds the images for this tile, each slot is a different layer
 	private BufferedImage[] image;
+	
+	//If not null, draw this over anything else drawn on the tile
+	//Upon exiting the cell, set value to null
+	private BufferedImage previewLayer;
 	
 	//Sends messages from Tile to GridUI
 	private StringListener listener;
@@ -79,6 +84,7 @@ class Tile extends JPanel {
 		this.type = type;
 		this.layer = 0;
 		this.rotate = false;
+		this.previewLayer = null;
 		
 		//Create and implement a new mouse listener to wait for user clicks
 		mouseListener = new MouseListener() {
@@ -95,8 +101,7 @@ class Tile extends JPanel {
 
 			@Override
 			public void mouseExited(MouseEvent e) {
-				//Currently do nothing
-				//Should eventually set previewImage to false
+				handleMouseExit(e);
 			}
 
 			@Override
@@ -106,7 +111,6 @@ class Tile extends JPanel {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				//Currently do nothing
 				//Should create the preview tiles if released
 				System.out.println("You just released the mouse!");
 				handleMouseRelease(e);
@@ -134,16 +138,26 @@ class Tile extends JPanel {
 		setPreferredSize(new Dimension(width, width));
 	}
 	
+	private void handleMouseExit(MouseEvent e)
+	/*
+	 * Triggered when mouse leaves the tile
+	 */
+	{
+		if (type == "regular") {
+		listener.textEmitted(row + "," + col +",removePreview");
+		}
+	}
+	
 	private void handleMouseRelease(MouseEvent e)
 	/*
 	 * Triggered when mouse is released
 	 */
 	{
 		//Initialize a BufferedImage array with all nulls to the size of max hashmap rows and cols
-		//Move from hashmap to array
 		if (e.getModifiers() == MouseEvent.BUTTON1_MASK && type == "mini") {
 			listener.textEmitted(row + "," + col + ",makeMatrix");
 		}
+		
 	}
 	
 	private void handleMouseEnter(MouseEvent e)
@@ -153,10 +167,13 @@ class Tile extends JPanel {
 	{
 		//If left button is down, send a dragged message
 		//Else, if right button is down and it's a regular tile, send a delete message
+		//Else, tell MainFrame to display the preview layer
 		if (e.getModifiers() == MouseEvent.BUTTON1_MASK) {
 			listener.textEmitted(row + "," + col + ",dragged");
 		} else if (e.getModifiers() == MouseEvent.BUTTON3_MASK && type == "regular") {
 			listener.textEmitted(row + "," + col + ",delete");
+		} else if (type == "regular") {
+			listener.textEmitted(row + "," + col + ",showPreview");
 		}
 	}
 	
@@ -181,8 +198,10 @@ class Tile extends JPanel {
 	{
 		//Transmits the row, column, and amount of rotation
 		//Note: Notches always seems to be either positve 1 or negative 1
+		if (type == "regular") {
 		int notches = e.getWheelRotation();
 		listener.textEmitted(row + "," + col + ",rotate~" + notches);
+		}
 	}
 	
 	public void rotation(int layer, boolean positive) 
@@ -249,20 +268,15 @@ class Tile extends JPanel {
 			
 			//For each Tile layer
 			for (int i = 0; i < image.length; i++) {
-				
-				//If rotating, rotate then draw
-				//Else, just draw
-				if (rotate && i == layer) {
-					//Draw the rotation in the correct space, then set rotate to false
-					at.translate(-image[i].getWidth() / 2, -image[i].getHeight() / 2);
-					Graphics2D g2d = (Graphics2D) g;
-					g2d.drawImage(image[i], at, null);
-					rotate = false;
-				} else {
-					g.drawImage(image[i], 0, 0, this);
-				}
+				g.drawImage(image[i], 0, 0, this);
 			}
 		} 
+		
+		if (previewLayer != null) {
+			Graphics2D g2d = (Graphics2D) g;
+			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+			g2d.drawImage(previewLayer, 0, 0, this);
+		}
 		
 		//If the tile is selected, overlay it with a transparent blue Rectangle
 		if (selected) {
@@ -306,6 +320,15 @@ class Tile extends JPanel {
 	 */
 	{
 		this.selected = selected;
+		repaint();
+	}
+	
+	public void setPreviewLayer(BufferedImage img)
+	/*
+	 * Sets the preview layer to a certain image
+	 */
+	{
+		this.previewLayer = img;
 		repaint();
 	}
 }

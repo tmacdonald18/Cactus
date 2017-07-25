@@ -6,16 +6,22 @@
  * 			Allows user to add and select a layer.
  */
 
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 public class Settings extends JPanel {
 	
@@ -27,7 +33,8 @@ public class Settings extends JPanel {
 	
 	//JComboBox containing the list of layers
 	//TODO: Change this to a JTable
-	private JComboBox<String> layerList;
+	//private JComboBox<String> layerList;
+	private JList<String> layerList;
 	
 	public Settings()
 	/*
@@ -40,23 +47,24 @@ public class Settings extends JPanel {
 		String[] layers = {"0"};
 		
 		//Initialize combo box
-		this.layerList = new JComboBox<String>(layers);
-
-		//ActionListener that sends a message to MainFrame whenever the combo box value is changed
-		layerList.addActionListener(new ActionListener(){
+		//this.layerList = new JComboBox<String>(layers);
+		final DefaultListModel<String> listModel = new DefaultListModel<String>();
+		listModel.addElement("0");
+		this.layerList = new JList<String>(listModel);
+		layerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		layerList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+		layerList.setVisibleRowCount(-1);
+		JScrollPane listScroller = new JScrollPane(layerList);
+		//listScroller.setPreferredSize(new Dimension(10, 80));
+		
+		layerList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					JComboBox<Object> cb =  (JComboBox<Object>) e.getSource();
-					selectionListener.textEmitted("layerdecision," + (String)cb.getSelectedItem());
-				} catch (Exception exc) {
-					exc.printStackTrace();
-				}
+			public void valueChanged(ListSelectionEvent e) {
+				selectionListener.textEmitted("layerdecision," + layerList.getSelectedValue());
 			}
 			
-		});
-		
+		});		
 		
 		JLabel layerSelection = new JLabel("Select a layer: ");
 		layerSelection.setFont(new Font("Arial", Font.BOLD, 14));
@@ -70,7 +78,7 @@ public class Settings extends JPanel {
 		gc.weighty = 1;
 		gc.anchor = GridBagConstraints.LINE_START;
 		
-		add(layerList, gc);
+		add(listScroller, gc);
 		
 		gc.gridx = 0;
 		gc.anchor = GridBagConstraints.LINE_END;
@@ -89,7 +97,8 @@ public class Settings extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				totalLayerCount++;
-				layerList.addItem(Integer.toString(totalLayerCount));
+				listModel.addElement(Integer.toString(totalLayerCount));
+				selectionListener.textEmitted("addLayer");
 			}
 			
 		});

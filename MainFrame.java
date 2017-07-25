@@ -10,32 +10,38 @@
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 
 public class MainFrame extends JFrame {
 
+	private Container contentPane;
+	
 	//The amounts of rows and columns to be passed into the grid constructor
 	public int ROW_COUNT, COLUMN_COUNT;
 	
@@ -47,6 +53,12 @@ public class MainFrame extends JFrame {
 	
 	//Holds the levelBuilderGrid
 	private JScrollPane levelScroll;
+	
+	//Holds the menu bar
+	private JMenuBar menuBar;
+	
+	//Listens to menu clicks
+	private ActionListener menuListener;
 	
 	//True if user is scrolling, false if user is not scrolling
 	//Should only be able to paint on UI if scrolling is false
@@ -66,7 +78,7 @@ public class MainFrame extends JFrame {
 	private HashMap<Integer, HashMap<Integer, BufferedImage>> selectedRows = new HashMap<Integer, HashMap<Integer, BufferedImage>>();
 	
 	//This object is used to display the selection onto the level building grid, without actually permanently setting the tile images
-	private ImageMatrix previewMatrix;
+	private ImageMatrix previewMatrix = new ImageMatrix();
 	
 	public MainFrame()
 	/*
@@ -78,140 +90,23 @@ public class MainFrame extends JFrame {
 		
 		//set look and feel
 		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		//Prompts user for setup inputs
-		setUp();
-		
-		//Create a container to hold the grid
-		JPanel gridContainer = new JPanel();
-		gridContainer.setLayout(new GridBagLayout());
-		
-		//Create the level builder grid by creating a new GridUI with the user inputed dimensions
-		levelBuilderGrid = new GridUI(ROW_COUNT, COLUMN_COUNT, "regular", null);
-		
-		//Establish the layout for the gridContainer and add the levelBuilderGrid to it
-		GridBagConstraints gc = new GridBagConstraints();
-		gc.fill = GridBagConstraints.NONE;
-		gc.weightx = 1;
-		gc.weighty = 1;
-		gc.gridx = 0;
-		gc.gridy = 0;
-		gridContainer.add(levelBuilderGrid, gc);
-		gridContainer.setBorder(new TitledBorder("Level Designer"));
-		
-		//Create a new container for the tilechooser using the user inputed tilesetPath
-		tileChooserContainer = new OptionsPanel(tilesetPath);
-		tileChooserContainer.setBorder(new TitledBorder("Tile Selector"));
-		
-		//StringListener used to manage the decisions incoming from the child components
-		StringListener dataDecider = new StringListener(){
-			@Override
-			public void textEmitted(String text) {
-				if (text.contains("layerdecision")) {
-					layerDecision(text);
-				} else {
-					dataDecision(text);
+			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+				if ("Nimbus".equals(info.getName())) {
+					UIManager.setLookAndFeel(info.getClassName());
+					System.out.println("Got Nimbus look");
+					break;
 				}
 			}
-		};
-		
-		//Set the String Listeners
-		tileChooserContainer.setStringListener(dataDecider);
-		levelBuilderGrid.setStringListener(dataDecider);
-		
-		//Initialize the level builder container inside of a scroll pane
-		levelScroll = new JScrollPane(gridContainer);
-		
-		//Create an adjustment listener to keep track of when the user is scrolling either pane
-		AdjustmentListener scrollListener = new AdjustmentListener() {
-
-			@Override
-			public void adjustmentValueChanged(AdjustmentEvent event) {
-				scrolling = event.getValueIsAdjusting();
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			try {
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			} catch (Exception e1) {
+				e1.printStackTrace();
 			}
-			
-		};
+		}
 		
-		//Assign scrollListener to both scroll bars
-		levelScroll.getHorizontalScrollBar().addAdjustmentListener(scrollListener);
-		levelScroll.getVerticalScrollBar().addAdjustmentListener(scrollListener);
-				
-		//Create a Settings Component
-		Settings settings = new Settings();
-		settings.setStringListener(dataDecider);
-		
-		//Assign scrollListener to the TileChooser scroll bars
-		tileChooserContainer.getTileChooser().setAdjustmentListeners(scrollListener);
-		
-		//Create a tabbed pane to hold Panels other than the level builder
-		JTabbedPane jt = new JTabbedPane();
-		jt.addTab("Tileset", tileChooserContainer);
-		jt.addTab("Settings", settings);
-		
-		//Create the split pane which will allow the user to control component sizes
-		JSplitPane jp = new JSplitPane();
-		jp.setLeftComponent(jt);
-		jp.setRightComponent(levelScroll);
-		jp.getLeftComponent().setMinimumSize(tileChooserContainer.getPreferredSize());
-				
-		//Add a mouse listener to the split pane divider so that selecting / painting can't happen if split pane is being changed
-		BasicSplitPaneUI bspui = (BasicSplitPaneUI) jp.getUI();
-		bspui.getDivider().addMouseListener(new MouseListener() {
-
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mouseExited(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mousePressed(MouseEvent arg0) {
-				System.out.println("Pressing the mouse");
-				scrolling = true;
-				
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent arg0) {
-				System.out.println("Releasing the mouse");
-				scrolling = false;
-			}
-			
-		});
-		
-		//Put everything onto the JFrame content pane
-		this.getContentPane().setLayout(new BorderLayout());
-		this.getContentPane().add(jp, BorderLayout.CENTER);
-		this.getContentPane().setBackground(new Color(128, 255, 128));
-		
-		addWindowListener(new java.awt.event.WindowAdapter() {
-		    @Override
-		    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-		        handleWindowClose();
-		    }
-		});
-		
-		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		//setLocationRelativeTo(null);
-		setSize(1000, 1000);
-		//pack();
-		setVisible(true);
+		startUp();		
 		
 	}
 	
@@ -382,6 +277,18 @@ public class MainFrame extends JFrame {
 						int notches = Integer.parseInt(tag.split("~")[1]);
 						handleSelectionRotation(notches, row, col);						
 						
+					} else if (tag.contains("showPreview")) {
+						try {
+							handleShowPreview(row, col);
+						} catch (Exception e) {
+							
+						}
+					} else if (tag.contains("removePreview")) {
+						try {
+							handleRemovePreview(row, col);
+						} catch (Exception e) {
+							
+						}
 					} else if (!selectedRows.isEmpty()) {
 						//If the hashmap is not empty
 						handleSelectionPaste(row, col);
@@ -393,48 +300,69 @@ public class MainFrame extends JFrame {
 		}
 	}//end
 	
-	private void handleSelectionPaste(int row, int col)
+	private void handleRemovePreview(int row, int col)
 	/*
-	 * Takes the current selection and pastes it onto the levelBuilder
+	 * Removes the previous previewed selection
 	 */
 	{
-		//Idea:
-		//Hashmap should contain null values for every column not used but that exists
-		//Essentially should be in the form of a matrix
-		Object[] rowKeys = selectedRows.keySet().toArray();
-		Arrays.sort(rowKeys);
+		int width = previewMatrix.getCols();
+		int height = previewMatrix.getRows();
 		
-		int rowOffset = 0, colOffset = 0;
+		int centerColOffset = width / 2;
+		int centerRowOffset = height / 2;
 		
-		for (int i = 0; i < rowKeys.length; i++) {
-			//System.out.println("This row is: " + rowKeys[i] + " and has the following columns selected: ");
-			Object[] colKeys = selectedRows.get(rowKeys[i]).keySet().toArray();
-			Arrays.sort(colKeys);
-			
-			//calculate row offset
-			if (i != 0) {
-				colOffset = (int) rowKeys[i] - (int) rowKeys[0];
-				System.out.println("Changing the column offset to: " + colOffset);
-			}
-			
-			for (int j = 0; j < colKeys.length; j++) {
-				
-				if (j != 0) {
-					rowOffset = (int) colKeys[j] - (int) colKeys[0];
-					System.out.println("Changing the row offset to: " + rowOffset);
-				}
-				
-				System.out.println("Setting Tile at: " + (row + rowOffset) + " and " + (col + colOffset));
-				
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
 				try {
-					levelBuilderGrid.getTile(row+rowOffset, col+colOffset).setImage(selectedRows.get(rowKeys[i]).get(colKeys[j]), selectedLayer);
+					levelBuilderGrid.getTile(row + j - centerColOffset, col + i - centerRowOffset).setPreviewLayer(null);
 				} catch (Exception e) {
-					e.printStackTrace();
+					
 				}
-			
 			}
-			rowOffset = 0;
-			colOffset = 0;
+		}
+	}
+	
+	private void handleShowPreview(int row, int col)
+	/*
+	 * Takes the current selection and pastes it onto the levelBuilder preview
+	 */
+	{
+		int width = previewMatrix.getCols();
+		int height = previewMatrix.getRows();
+		
+		int centerColOffset = width / 2;
+		int centerRowOffset = height / 2;
+		
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++)
+				try {
+					levelBuilderGrid.getTile(row + j - centerColOffset, col + i - centerRowOffset).setPreviewLayer(previewMatrix.getTile(i, j));
+				} catch (Exception e) {
+					
+				}
+			}
+	}
+	
+	private void handleSelectionPaste(int row, int col)
+	/*
+	 * Takes the current selection (the previewMatrix) and pastes it onto the levelBuilder
+	 */
+	{	
+		int width = previewMatrix.getCols();
+		int height = previewMatrix.getRows();
+		
+		int centerColOffset = width / 2;
+		int centerRowOffset = height / 2;
+		
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				try {
+					if (previewMatrix.getTile(i, j) != null)
+						levelBuilderGrid.getTile(row + j - centerColOffset, col + i - centerRowOffset).setImage(previewMatrix.getTile(i, j), selectedLayer);
+				} catch (Exception e) {
+					
+				}
+			}
 		}
 	}
 	
@@ -444,11 +372,15 @@ public class MainFrame extends JFrame {
 	 * TODO: Use matrix rotation to first find the transpose of the selection, then reverse the columns
 	 */
 	{
+		handleRemovePreview(row, col);
+		
 		if (notches > 0) {
-			levelBuilderGrid.getTile(row, col).rotation(selectedLayer, true);
+			previewMatrix.rotateRight();
 		} else {
-			levelBuilderGrid.getTile(row, col).rotation(selectedLayer, false);
+			previewMatrix.rotateLeft();
 		}
+		
+		handleShowPreview(row, col);
 	}
 	
 	private void addToHashmapSelection(int row, int col)
@@ -474,6 +406,223 @@ public class MainFrame extends JFrame {
 	{
 		selectedRows.clear();
 		tileChooserContainer.getTileChooser().getGrid().setAllUnselected();
+	}
+	
+	private void startUp() 
+	/*
+	 * 
+	 */
+	{
+		//Prompts user for setup inputs
+		setUp();
+		
+		//Create a container to hold the grid
+		JPanel gridContainer = new JPanel();
+		gridContainer.setLayout(new GridBagLayout());
+		
+		//Create the level builder grid by creating a new GridUI with the user inputed dimensions
+		levelBuilderGrid = new GridUI(ROW_COUNT, COLUMN_COUNT, "regular", null);
+		
+		//Establish the layout for the gridContainer and add the levelBuilderGrid to it
+		GridBagConstraints gc = new GridBagConstraints();
+		gc.fill = GridBagConstraints.NONE;
+		gc.weightx = 1;
+		gc.weighty = 1;
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gridContainer.add(levelBuilderGrid, gc);
+		gridContainer.setBorder(new TitledBorder("Level Designer"));
+		
+		//Create a new container for the tilechooser using the user inputed tilesetPath
+		tileChooserContainer = new OptionsPanel(tilesetPath);
+		tileChooserContainer.setBorder(new TitledBorder("Tile Selector"));
+		
+		//StringListener used to manage the decisions incoming from the child components
+		StringListener dataDecider = new StringListener(){
+			@Override
+			public void textEmitted(String text) {
+				if (text.contains("layerdecision")) {
+					layerDecision(text);
+				} else if (text.contains("addLayer")) {
+					totalLayers++;
+				} else {
+					dataDecision(text);
+				}
+			}
+		};
+		
+		//Set the String Listeners
+		tileChooserContainer.setStringListener(dataDecider);
+		levelBuilderGrid.setStringListener(dataDecider);
+		
+		//Initialize the level builder container inside of a scroll pane
+		levelScroll = new JScrollPane(gridContainer);
+		
+		//Create an adjustment listener to keep track of when the user is scrolling either pane
+		AdjustmentListener scrollListener = new AdjustmentListener() {
+
+			@Override
+			public void adjustmentValueChanged(AdjustmentEvent event) {
+				scrolling = event.getValueIsAdjusting();
+			}
+			
+		};
+		
+		//Assign scrollListener to both scroll bars
+		levelScroll.getHorizontalScrollBar().addAdjustmentListener(scrollListener);
+		levelScroll.getVerticalScrollBar().addAdjustmentListener(scrollListener);
+				
+		//Create a Settings Component
+		Settings settings = new Settings();
+		settings.setStringListener(dataDecider);
+		
+		//Assign scrollListener to the TileChooser scroll bars
+		tileChooserContainer.getTileChooser().setAdjustmentListeners(scrollListener);
+		
+		//Create a tabbed pane to hold Panels other than the level builder
+		JTabbedPane jt = new JTabbedPane();
+		jt.addTab("Tileset", tileChooserContainer);
+		jt.addTab("Settings", settings);
+		jt.addTab("Collision Manager", new JPanel());
+		
+		//Create the split pane which will allow the user to control component sizes
+		JSplitPane jp = new JSplitPane();
+		jp.setLeftComponent(jt);
+		jp.setRightComponent(levelScroll);
+		jp.getLeftComponent().setMinimumSize(tileChooserContainer.getPreferredSize());
+				
+		//Add a mouse listener to the split pane divider so that selecting / painting can't happen if split pane is being changed
+		BasicSplitPaneUI bspui = (BasicSplitPaneUI) jp.getUI();
+		bspui.getDivider().addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				System.out.println("Pressing the mouse");
+				scrolling = true;
+				
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				System.out.println("Releasing the mouse");
+				scrolling = false;
+			}
+			
+		});
+		
+		//Put everything onto the JFrame content pane
+		contentPane = this.getContentPane();
+		contentPane.setLayout(new BorderLayout());
+		contentPane.add(jp, BorderLayout.CENTER);
+		contentPane.setBackground(new Color(128, 255, 128));
+		
+		//Initialize the menu bar
+		menuBar = createMenu();
+		this.setJMenuBar(menuBar);
+		
+		addWindowListener(new java.awt.event.WindowAdapter() {
+		    @Override
+		    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+		        handleWindowClose();
+		    }
+		});
+		
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		//setLocationRelativeTo(null);
+		setSize(1000, 1000);
+		//pack();
+		setVisible(true);
+	}
+	
+	private JMenuBar createMenu()
+	/*
+	 * Initializes the JMenuBar for the frame
+	 */
+	{
+		JMenuBar menuBar = new JMenuBar();
+		
+		menuListener = new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent action) {
+				String itemName = action.getActionCommand();
+				switch(itemName){
+					case "New":
+						System.out.println("Handle New");
+						contentPane.removeAll();
+						contentPane.repaint();
+						tilesetPath = "continue";
+						startUp();
+						break;
+					case "Open...":
+						System.out.println("Handle Open");
+						contentPane.removeAll();
+						contentPane.repaint();
+						//load;
+						break;
+					case "Save":
+						System.out.println("Handle Save");
+						XMLHandler xml = new XMLHandler();
+						xml.saveToFile("hey", totalLayers, levelBuilderGrid, tileChooserContainer.getTileChooser().getGrid());
+						break;
+					case "Save As...":
+						System.out.println("Handle Save As");
+						break;
+					case "Export":
+						System.out.println("Handle Export");
+						break;
+				}
+						
+			}
+			
+		};
+		
+		JMenu menu = new JMenu("File");
+		JMenuItem menuItem;
+		
+		menuItem = new JMenuItem("New");
+		menuItem.addActionListener(menuListener);
+		menu.add(menuItem);
+		
+		menuItem = new JMenuItem("Open...");
+		menuItem.addActionListener(menuListener);
+		menu.add(menuItem);
+		
+		menuItem = new JMenuItem("Save");
+		menuItem.addActionListener(menuListener);
+		menu.add(menuItem);
+		
+		menuItem = new JMenuItem("Save As...");
+		menuItem.addActionListener(menuListener);
+		menu.add(menuItem);
+		
+		menu.addSeparator();
+		
+		menuItem = new JMenuItem("Export");
+		menuItem.addActionListener(menuListener);
+		menu.add(menuItem);
+		
+		menuBar.add(menu);
+		
+		return menuBar;
 	}
 	
 }
