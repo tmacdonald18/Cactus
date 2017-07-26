@@ -80,6 +80,8 @@ public class MainFrame extends JFrame {
 	//This object is used to display the selection onto the level building grid, without actually permanently setting the tile images
 	private ImageMatrix previewMatrix = new ImageMatrix();
 	
+	private BufferedImage[][][] loadImages = null;
+	
 	public MainFrame()
 	/*
 	 * Constructor for the main program frame
@@ -106,6 +108,7 @@ public class MainFrame extends JFrame {
 			}
 		}
 		
+		setUp();
 		startUp();		
 		
 	}
@@ -169,8 +172,9 @@ public class MainFrame extends JFrame {
 		
 		switch(n) {
 		case JOptionPane.NO_OPTION:
-			//TODO: Fix the Load Option
-			System.exit(0);
+			handleLoad("path");
+			while (tilesetPath == "continue")
+				tilesetPath = userInputTileset(fc);
 			break;
 		case JOptionPane.YES_OPTION:
 			//If User has chosen to create a new level
@@ -412,16 +416,17 @@ public class MainFrame extends JFrame {
 	/*
 	 * 
 	 */
-	{
-		//Prompts user for setup inputs
-		setUp();
-		
+	{		
 		//Create a container to hold the grid
 		JPanel gridContainer = new JPanel();
 		gridContainer.setLayout(new GridBagLayout());
 		
 		//Create the level builder grid by creating a new GridUI with the user inputed dimensions
-		levelBuilderGrid = new GridUI(ROW_COUNT, COLUMN_COUNT, "regular", null);
+		if (loadImages == null)
+			levelBuilderGrid = new GridUI(ROW_COUNT, COLUMN_COUNT, "regular", null, 1);
+		else {
+			levelBuilderGrid = new GridUI(ROW_COUNT, COLUMN_COUNT, "loading", loadImages, totalLayers);
+		}
 		
 		//Establish the layout for the gridContainer and add the levelBuilderGrid to it
 		GridBagConstraints gc = new GridBagConstraints();
@@ -574,6 +579,8 @@ public class MainFrame extends JFrame {
 						break;
 					case "Open...":
 						System.out.println("Handle Open");
+						XMLHandler xml2 = new XMLHandler();
+						xml2.loadFromFile("hey", contentPane);
 						contentPane.removeAll();
 						contentPane.repaint();
 						//load;
@@ -623,6 +630,27 @@ public class MainFrame extends JFrame {
 		menuBar.add(menu);
 		
 		return menuBar;
+	}
+	
+	private void handleLoad(String path)
+	/*
+	 * Incorporates XMLHandler to create a loader that loads a properly formatted XML file as a grid
+	 */
+	{
+		String levelGrid = "LevelGrid";
+		
+		XMLHandler loader = new XMLHandler("C:\\Users\\n0286782\\Documents\\saveFile.xml");
+		ROW_COUNT = loader.getRows(levelGrid);
+		COLUMN_COUNT = loader.getCols(levelGrid);
+		totalLayers = loader.getLayers(levelGrid);
+		
+		BufferedImage[][][] imgs = new BufferedImage[totalLayers][ROW_COUNT][COLUMN_COUNT];
+		
+		imgs = loader.getImages(totalLayers, ROW_COUNT, COLUMN_COUNT);
+		
+		loadImages = imgs;
+		
+		System.out.println("Loaded");
 	}
 	
 }

@@ -6,7 +6,6 @@
  * 			Allows user to add and select a layer.
  */
 
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -18,7 +17,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -43,9 +41,6 @@ public class Settings extends JPanel {
 	{
 		totalLayerCount = 0;
 		
-		//Define the layers array
-		String[] layers = {"0"};
-		
 		//Initialize combo box
 		//this.layerList = new JComboBox<String>(layers);
 		final DefaultListModel<String> listModel = new DefaultListModel<String>();
@@ -54,7 +49,6 @@ public class Settings extends JPanel {
 		layerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		layerList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 		layerList.setVisibleRowCount(-1);
-		JScrollPane listScroller = new JScrollPane(layerList);
 		//listScroller.setPreferredSize(new Dimension(10, 80));
 		
 		layerList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -78,7 +72,7 @@ public class Settings extends JPanel {
 		gc.weighty = 1;
 		gc.anchor = GridBagConstraints.LINE_START;
 		
-		add(listScroller, gc);
+		add(layerList, gc);
 		
 		gc.gridx = 0;
 		gc.anchor = GridBagConstraints.LINE_END;

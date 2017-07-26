@@ -1,20 +1,25 @@
 import java.awt.Container;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 import javax.imageio.ImageIO;
+import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.bind.DatatypeConverter;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /*
  * XMLHandler.java
@@ -24,12 +29,151 @@ import org.w3c.dom.Element;
  */
 public class XMLHandler {
 	
+	private Document doc;
+	
+	private File fXmlFile;
+	
+	public XMLHandler()
+	/*
+	 * Default constructor creates an XMLHandler for creating XML Files
+	 */
+	{
+		try {
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			doc = dBuilder.newDocument();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public XMLHandler(String filePath)
+	/*
+	 * Constructor that opens an XMLFile to read from
+	 */
+	{
+		try {
+			fXmlFile = new File(filePath);
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			doc = dBuilder.parse(fXmlFile);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void loadFromFile(String path, Container contentPane)
 	/*
 	 * Takes a path to a file and a the contentpane and loads into it
 	 */
 	{
+		doc.getDocumentElement().normalize();
 		
+		System.out.println("Root Element: " + doc.getDocumentElement().getNodeName());
+		
+		NodeList nList = doc.getElementsByTagName("LevelGrid");
+		System.out.println("--------------");
+		
+		for (int temp = 0; temp < nList.getLength(); temp++) {
+			
+			Node nNode = nList.item(temp);
+			
+			System.out.println("\nCurrent Element: " + nNode.getNodeName());
+			
+			System.out.println(nNode.getChildNodes());
+			
+			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+				
+				Element eElement = (Element) nNode;
+				
+				System.out.println(eElement.getElementsByTagName("Layer"));
+				
+			}
+			
+			
+		}
+			
+	}
+	
+	public int getRows(String gridName)
+	/*
+	 * Gets the number of rows in the given saved GridUI
+	 */
+	{		
+		
+		NodeList nList = doc.getElementsByTagName(gridName);
+		
+		for (int x = 0; x < nList.getLength(); x++) {
+			Node nNode = nList.item(x);
+			
+			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+				return Integer.parseInt(nNode.getFirstChild().getTextContent());
+			}
+		}
+		
+		return -1;
+	}
+	
+	public int getCols(String gridName)
+	/*
+	 * Gets the number of columns in the given saved GridUI
+	 */
+	{
+		NodeList nList = doc.getElementsByTagName(gridName);
+		
+		for (int x = 0; x < nList.getLength(); x++) {
+			Node nNode = nList.item(x);
+			
+			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+				return Integer.parseInt(nNode.getFirstChild().getNextSibling().getTextContent());
+			}
+		}
+		
+		return -1;
+	}
+	
+	public int getLayers(String gridName)
+	/*
+	 * Gets the number of layers in the given saved GridUI
+	 */
+	{
+		NodeList nList = doc.getElementsByTagName(gridName);
+		
+		for (int x = 0; x < nList.getLength(); x++) {
+			Node nNode = nList.item(x);
+			
+			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+				return Integer.parseInt(nNode.getFirstChild().getNextSibling().getNextSibling().getTextContent());
+			}
+		}
+		
+		return -1;
+	}
+	
+	public BufferedImage[][][] getImages(int layers, int rows, int cols)
+	/*
+	 * In a given grid, gets a specific save tile and converts it to a BufferedImage
+	 */
+	{
+		BufferedImage[][][] images = new BufferedImage[layers][rows][cols];
+		
+		for (int k = 0; k < layers; k++) {
+			//Get the first row from the given layer
+			Node row = doc.getElementsByTagName("Layer_" + k).item(0).getFirstChild();
+			
+			for (int i = 0; i < rows; i++) { 
+				//Get first column node
+				Node col = row.getFirstChild();
+				for (int j = 0; j < cols; j++) {
+					images[k][i][j] = convertStringToImage(col.getFirstChild().getTextContent());
+					col = col.getNextSibling();
+				}
+				row = row.getNextSibling();
+			}
+			
+		}
+		
+		return images;
 	}
 	
 	public void saveToFile(String path, int totalLayers, GridUI levelBuilderGrid, GridUI tileChooserGrid)
@@ -41,11 +185,8 @@ public class XMLHandler {
 		int cols = levelBuilderGrid.getCols();
 		
 		try {
-			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 			
 			//Root element
-			Document doc = docBuilder.newDocument();
 			Element rootElement = doc.createElement("Level");
 			doc.appendChild(rootElement);
 			
@@ -61,35 +202,40 @@ public class XMLHandler {
 			colCount.appendChild(doc.createTextNode(Integer.toString(cols)));
 			levelGrid.appendChild(colCount);
 			
+			Element layersCount = doc.createElement("LayersCount");
+			layersCount.appendChild(doc.createTextNode(Integer.toString(totalLayers)));
+			levelGrid.appendChild(layersCount);
+			
+			System.out.println("Saving Level");
+			
 			//Add all tiles to it
-			for (int k = 0; k < totalLayers; k++) {
-				Element layer = doc.createElement("Layer");
-				Attr layerNum = doc.createAttribute("Number");
-				layerNum.setValue(Integer.toString(k));
-				layer.setAttributeNode(layerNum);
+			for (int k = 0; k < totalLayers + 1; k++) {
+				Element layer = doc.createElement("Layer_" + k);
 				levelGrid.appendChild(layer);
 				
 				for (int i = 0; i < rows; i++) {
+					//Create new row elements to hold columns
+					Element tileRow = doc.createElement("Row");
+					tileRow.appendChild(doc.createTextNode(Integer.toString(i)));
+					layer.appendChild(tileRow);
+					
 					for (int j = 0; j < cols; j++) {
+						//Create new column element to hold tile data
+						Element tileCol = doc.createElement("Col");
+						tileCol.appendChild(doc.createTextNode(Integer.toString(j)));
+						tileRow.appendChild(tileCol);
+						
 						BufferedImage curImg = levelBuilderGrid.getTile(i, j).getImage(k);
 						
-						Element tile = doc.createElement("Tile");
-						
-						Attr row = doc.createAttribute("row");
-						row.setValue(Integer.toString(i));
-						tile.setAttributeNode(row);
-						
-						Attr col = doc.createAttribute("col");
-						col.setValue(Integer.toString(j));
-						tile.setAttributeNode(col);
+						Element tileImg = doc.createElement("TileImg");
 						
 						if (curImg == null) {
-							tile.appendChild(doc.createTextNode("NULL"));
+							tileImg.appendChild(doc.createTextNode("NULL"));
 						} else {
-							tile.appendChild(doc.createTextNode(convertImageToString(curImg)));
+							tileImg.appendChild(doc.createTextNode(convertImageToString(curImg)));
 						}
 						
-						layer.appendChild(tile);
+						tileCol.appendChild(tileImg);
 					}
 				}
 			}
@@ -108,6 +254,28 @@ public class XMLHandler {
 		}
 	}
 
+	private BufferedImage convertStringToImage(String base64Image)
+	/*
+	 * Takes a base64 encoded png image byte stream and converts it to a BufferedImage
+	 */
+	{
+		byte[] imageBytes = DatatypeConverter.parseBase64Binary(base64Image);
+		
+		InputStream in = new ByteArrayInputStream(imageBytes);
+		BufferedImage img;
+		
+		try {
+			img = ImageIO.read(in);
+		} catch (IOException e) {
+			e.printStackTrace();
+			img = null;
+		}
+		
+		System.out.println(img.toString());
+		
+		return img;
+	}
+	
 	private String convertImageToString(BufferedImage img)
 	/*
 	 * Takes a BufferedImage and converts it's binary to base64

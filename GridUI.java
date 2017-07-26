@@ -40,7 +40,7 @@ public class GridUI extends JPanel {
 	private StringListener gridListener;
 	private StringListener sl;
 	
-	public GridUI(int rows, int cols, final String type, BufferedImage[] images) 
+	public GridUI(int rows, int cols, final String type, BufferedImage[][][] images, int layers) 
 	/*
 	 * Constructor for a GridUI
 	 * Parameters:
@@ -81,6 +81,23 @@ public class GridUI extends JPanel {
 			
 			//build the grid
 			buildLevelGrid(gc);
+			
+		} else if (type == "loading") { 
+			this.tileWidth = 32;
+			
+			setLayout(new GridBagLayout());
+			GridBagConstraints gc = new GridBagConstraints();
+			
+			gc.weightx = 1;
+			gc.weighty = 1;
+			gc.fill = GridBagConstraints.NONE;
+			gc.anchor = GridBagConstraints.CENTER;
+			
+			tiles = new Tile[rows][cols];
+			
+			loadLevelGrid(gc, images, layers);
+			
+			this.type = "regular";
 			
 		} else if (type == "mini") {
 			this.tileWidth = 64;
@@ -130,6 +147,26 @@ public class GridUI extends JPanel {
 				
 				add(tiles[i][j], gc);
 				tiles[i][j].setStringListener(sl);
+			}
+		}
+	}
+	
+	private void loadLevelGrid(GridBagConstraints gc, BufferedImage[][][] imgs, int layers)
+	/*
+	 * 
+	 */
+	{
+		for (int k = 0; k < layers; k++) {
+			for (int i = 0; i < rows; i++) {
+				gc.gridx = i;
+				for (int j = 0; j < cols; j++) {
+					gc.gridy = j;
+					tiles[i][j] = new Tile(this.tileWidth, i, j, type);
+					tiles[i][j].setImage(imgs[k][i][j], k);
+					
+					add(tiles[i][j], gc);
+					tiles[i][j].setStringListener(sl);
+				}
 			}
 		}
 	}
