@@ -64,7 +64,7 @@ public class TileChooser extends JPanel {
 		this.numTiles = splitTileset();
 		
 		//Creates a new minigrid which will allow for tile selection
-		miniGrid = new GridUI(rows, cols, "mini", null, 0);
+		miniGrid = new GridUI(rows, cols, "mini", null, 0, 0);
 		
 		//Creates a new StringListener to check if miniGrid is sending messages
 		miniGrid.setStringListener(new StringListener(){

@@ -54,6 +54,8 @@ public class MainFrame extends JFrame {
 	//Holds the levelBuilderGrid
 	private JScrollPane levelScroll;
 	
+	private JFileChooser fc;
+	
 	//Holds the menu bar
 	private JMenuBar menuBar;
 	
@@ -128,19 +130,9 @@ public class MainFrame extends JFrame {
 		
 		switch(answer) {
 			case JOptionPane.YES_OPTION:
-				
-				//User has chosen to save
-				JFileChooser fc = new JFileChooser();
-				int returnVal = fc.showSaveDialog(null);
-				
-				//Sets the levelBuilderGrids save path to the user selection
-				if (returnVal == JFileChooser.APPROVE_OPTION) {
-					levelBuilderGrid.setSavePath(fc.getSelectedFile().getAbsolutePath());
-				}
-				
-				//Exports the grid as a .png file
-				levelBuilderGrid.saveGrid(totalLayers);
-	
+				System.out.println("Handle Save");
+				XMLHandler xml = new XMLHandler();
+				xml.saveToFile("hey", totalLayers, levelBuilderGrid, tileChooserContainer.getTileChooser().getGrid());
 			case JOptionPane.NO_OPTION:
 				//This happens if the user hits yes or no
 				//Deletes all files out of current_session cache
@@ -195,6 +187,18 @@ public class MainFrame extends JFrame {
 		}
 	}
 	
+	private void hitNew() {
+		JFileChooser fc = new JFileChooser();
+		
+		String s = (String) JOptionPane.showInputDialog("Enter rows,columns (example: 32,32)");
+		this.ROW_COUNT = Integer.parseInt(s.split(",")[0].replace(" ", ""));
+		this.COLUMN_COUNT = Integer.parseInt(s.split(",")[1].replace(" ", ""));
+		
+		//Prompt user to select their tileset, and keep prompting until they do
+		while (tilesetPath == "continue")
+			tilesetPath = userInputTileset(fc);
+	}
+	
 	
 	private String userInputTileset(JFileChooser fc)
 		/*
@@ -229,6 +233,9 @@ public class MainFrame extends JFrame {
 	 * Handles any incoming data in the form of a String from a StringListener, then decides what to do
 	 */
 	{
+		System.out.println("Here is the text: ");
+		System.out.println(text);
+		
 		if (text.contains("clear")) {
 			clearOutSelection();			
 		
@@ -423,9 +430,11 @@ public class MainFrame extends JFrame {
 		
 		//Create the level builder grid by creating a new GridUI with the user inputed dimensions
 		if (loadImages == null)
-			levelBuilderGrid = new GridUI(ROW_COUNT, COLUMN_COUNT, "regular", null, 1);
+			levelBuilderGrid = new GridUI(ROW_COUNT, COLUMN_COUNT, "regular", null, 1, 0);
 		else {
-			levelBuilderGrid = new GridUI(ROW_COUNT, COLUMN_COUNT, "loading", loadImages, totalLayers);
+			System.out.println("total layers are " + totalLayers);
+			levelBuilderGrid = new GridUI(ROW_COUNT, COLUMN_COUNT, "regular", loadImages, totalLayers, 1);
+			loadImages = null;
 		}
 		
 		//Establish the layout for the gridContainer and add the levelBuilderGrid to it
@@ -575,14 +584,26 @@ public class MainFrame extends JFrame {
 						contentPane.removeAll();
 						contentPane.repaint();
 						tilesetPath = "continue";
+						hitNew();
 						startUp();
 						break;
 					case "Open...":
 						System.out.println("Handle Open");
-						XMLHandler xml2 = new XMLHandler();
-						xml2.loadFromFile("hey", contentPane);
 						contentPane.removeAll();
 						contentPane.repaint();
+						
+						int result2 = fc.showOpenDialog(null);
+						
+						if (result2 == JFileChooser.APPROVE_OPTION) {
+							String loadPath = fc.getSelectedFile().getAbsolutePath();
+						}
+						
+						String loadPath = "";
+						
+						handleLoad(loadPath);
+						while (tilesetPath == "continue")
+							tilesetPath = userInputTileset(fc);
+						
 						//load;
 						break;
 					case "Save":
@@ -592,9 +613,23 @@ public class MainFrame extends JFrame {
 						break;
 					case "Save As...":
 						System.out.println("Handle Save As");
+						XMLHandler xml3 = new XMLHandler();
+						xml3.saveToFile("hey", totalLayers, levelBuilderGrid, tileChooserContainer.getTileChooser().getGrid());
 						break;
-					case "Export":
-						System.out.println("Handle Export");
+					case "Export As Layers":
+						System.out.println("Handle Export As Layers");
+						
+						//User has chosen to export
+						JFileChooser fc = new JFileChooser();
+						int returnVal = fc.showSaveDialog(null);
+						
+						//Sets the levelBuilderGrids save path to the user selection
+						if (returnVal == JFileChooser.APPROVE_OPTION) {
+							levelBuilderGrid.setSavePath(fc.getSelectedFile().getAbsolutePath());
+						}
+						
+						//Exports the grid as a .png file
+						levelBuilderGrid.exportGrid(totalLayers);
 						break;
 				}
 						
@@ -623,7 +658,11 @@ public class MainFrame extends JFrame {
 		
 		menu.addSeparator();
 		
-		menuItem = new JMenuItem("Export");
+		menuItem = new JMenuItem("Export As Layers");
+		menuItem.addActionListener(menuListener);
+		menu.add(menuItem);
+		
+		menuItem = new JMenuItem("Export As Image");
 		menuItem.addActionListener(menuListener);
 		menu.add(menuItem);
 		
@@ -638,8 +677,17 @@ public class MainFrame extends JFrame {
 	 */
 	{
 		String levelGrid = "LevelGrid";
+		String loadFile = path;
 		
-		XMLHandler loader = new XMLHandler("C:\\Users\\n0286782\\Documents\\saveFile.xml");
+		JFileChooser loadFileChooser = new JFileChooser();
+		
+		int result2 = loadFileChooser.showOpenDialog(null);
+		
+		if (result2 == JFileChooser.APPROVE_OPTION) {
+			loadFile = loadFileChooser.getSelectedFile().getAbsolutePath();
+		}
+		
+		XMLHandler loader = new XMLHandler(loadFile);
 		ROW_COUNT = loader.getRows(levelGrid);
 		COLUMN_COUNT = loader.getCols(levelGrid);
 		totalLayers = loader.getLayers(levelGrid);

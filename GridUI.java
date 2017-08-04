@@ -40,7 +40,7 @@ public class GridUI extends JPanel {
 	private StringListener gridListener;
 	private StringListener sl;
 	
-	public GridUI(int rows, int cols, final String type, BufferedImage[][][] images, int layers) 
+	public GridUI(int rows, int cols, final String type, BufferedImage[][][] images, int layers, int trigger) 
 	/*
 	 * Constructor for a GridUI
 	 * Parameters:
@@ -65,7 +65,24 @@ public class GridUI extends JPanel {
 			
 		};
 		
-		if (type == "regular") {
+		if (trigger == 1) { 
+			this.tileWidth = 32;
+			
+			setLayout(new GridBagLayout());
+			GridBagConstraints gc = new GridBagConstraints();
+			
+			gc.weightx = 1;
+			gc.weighty = 1;
+			gc.fill = GridBagConstraints.NONE;
+			gc.anchor = GridBagConstraints.CENTER;
+			
+			tiles = new Tile[rows][cols];
+			
+			System.out.println("Rows are: " + rows + " and columns are: " + cols);
+			
+			loadLevelGrid(gc, images, layers);
+			
+		} else if (type == "regular") {
 			this.tileWidth = 32;
 			
 			setLayout(new GridBagLayout());
@@ -82,24 +99,7 @@ public class GridUI extends JPanel {
 			//build the grid
 			buildLevelGrid(gc);
 			
-		} else if (type == "loading") { 
-			this.tileWidth = 32;
-			
-			setLayout(new GridBagLayout());
-			GridBagConstraints gc = new GridBagConstraints();
-			
-			gc.weightx = 1;
-			gc.weighty = 1;
-			gc.fill = GridBagConstraints.NONE;
-			gc.anchor = GridBagConstraints.CENTER;
-			
-			tiles = new Tile[rows][cols];
-			
-			loadLevelGrid(gc, images, layers);
-			
-			this.type = "regular";
-			
-		} else if (type == "mini") {
+		}  else if (type == "mini") {
 			this.tileWidth = 64;
 			
 			setLayout(new GridLayout(rows, cols));
@@ -156,19 +156,33 @@ public class GridUI extends JPanel {
 	 * 
 	 */
 	{
-		for (int k = 0; k < layers; k++) {
+		
+		System.out.println("loading the level grid");
+		
+		for (int i = 0; i < rows; i++) {
+			System.out.println("     on row: " + i);
+			gc.gridx = i;
+			for (int j = 0; j < cols; j++) {
+				System.out.println("          on col " + j);
+				gc.gridy = j;
+				tiles[i][j] = new Tile(this.tileWidth, i, j, type);
+				
+				add(tiles[i][j], gc);
+				tiles[i][j].setStringListener(sl);
+			}
+		}
+		
+		System.out.println("Adding load level images.");
+		
+		for (int k = 0; k < layers + 1; k++) {
 			for (int i = 0; i < rows; i++) {
-				gc.gridx = i;
 				for (int j = 0; j < cols; j++) {
-					gc.gridy = j;
-					tiles[i][j] = new Tile(this.tileWidth, i, j, type);
 					tiles[i][j].setImage(imgs[k][i][j], k);
-					
-					add(tiles[i][j], gc);
-					tiles[i][j].setStringListener(sl);
 				}
 			}
 		}
+	
+		System.out.println("Finished loading the level grid");
 	}
 
 	public void setStringListener(StringListener listener) 
@@ -195,7 +209,7 @@ public class GridUI extends JPanel {
 		this.savePath = path;
 	}
 	
-	public void saveGrid(int numLayers)
+	public void exportGrid(int numLayers)
 	/*
 	 * This is the save function which will combine all of the tiles into one giant PNG bitmap image
 	 * TODO: Create an XML data storage file as part of the save file, might even be able to combine the two?
@@ -209,7 +223,7 @@ public class GridUI extends JPanel {
 		if (path.endsWith(".png"))
 			path = path.replace(".png", "");
 		
-		for (int i = 0; i < numLayers; i++) {
+		for (int i = 0; i <= numLayers; i++) {
 			result = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_INT_ARGB);
 			g = result.getGraphics();
 			drawLayer(g, i);
@@ -233,7 +247,7 @@ public class GridUI extends JPanel {
 		
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
-				temp = tiles[i][j].getImage(i);
+				temp = tiles[i][j].getImage(layer);
 				g.drawImage(temp, i * this.tileWidth, j * this.tileWidth, null);
 			}
 		}

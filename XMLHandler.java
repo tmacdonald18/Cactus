@@ -155,20 +155,41 @@ public class XMLHandler {
 	 * In a given grid, gets a specific save tile and converts it to a BufferedImage
 	 */
 	{
+		//Layers count starts at 0 so add 1
+		layers = layers + 1;
+		
 		BufferedImage[][][] images = new BufferedImage[layers][rows][cols];
 		
 		for (int k = 0; k < layers; k++) {
+			
+			System.out.println("ON THE FIRST LAYER");
+			
 			//Get the first row from the given layer
 			Node row = doc.getElementsByTagName("Layer_" + k).item(0).getFirstChild();
 			
+			System.out.println(row.getNodeName());
+			
 			for (int i = 0; i < rows; i++) { 
+				
 				//Get first column node
-				Node col = row.getFirstChild();
+				Node col = row.getFirstChild().getNextSibling();
+				
+				System.out.println(col.getNodeName());
+				
 				for (int j = 0; j < cols; j++) {
-					images[k][i][j] = convertStringToImage(col.getFirstChild().getTextContent());
+					
+					Node tileImg = col.getFirstChild().getNextSibling();
+					System.out.println(tileImg.getTextContent());
+					
+					if (!tileImg.getTextContent().contains("NULL"))
+						images[k][i][j] = convertStringToImage(tileImg.getTextContent());
+					
 					col = col.getNextSibling();
+				
 				}
+				
 				row = row.getNextSibling();
+			
 			}
 			
 		}
