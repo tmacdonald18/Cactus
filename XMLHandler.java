@@ -62,7 +62,7 @@ public class XMLHandler {
 		}
 	}
 	
-	public void loadFromFile(String path, Container contentPane)
+	public void loadFromFile(Container contentPane)
 	/*
 	 * Takes a path to a file and a the contentpane and loads into it
 	 */
@@ -264,7 +264,7 @@ public class XMLHandler {
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
 			DOMSource source = new DOMSource(doc);
-			StreamResult result = new StreamResult(new File("C:\\Users\\N0286782\\Documents\\saveFile.xml"));
+			StreamResult result = new StreamResult(new File(path + ".xml"));
 			
 			transformer.transform(source, result);
 			

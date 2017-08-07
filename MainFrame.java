@@ -21,6 +21,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
@@ -41,6 +43,12 @@ import javax.swing.plaf.basic.BasicSplitPaneUI;
 public class MainFrame extends JFrame {
 
 	private Container contentPane;
+	
+	//The current working directory of the application
+	public String current_directory;
+	
+	//The current path of the current_session folder
+	public String current_session_path;
 	
 	//The amounts of rows and columns to be passed into the grid constructor
 	public int ROW_COUNT, COLUMN_COUNT;
@@ -110,6 +118,14 @@ public class MainFrame extends JFrame {
 			}
 		}
 		
+		//if current_directory does not exist, then create it
+		current_directory = System.getProperty("user.dir");
+		current_session_path = current_directory + File.separator + "src" + File.separator + "current_session";
+		File path = new File(current_session_path);
+		
+		if (!path.exists())
+			path.mkdir();
+		
 		setUp();
 		startUp();		
 		
@@ -164,10 +180,21 @@ public class MainFrame extends JFrame {
 		
 		switch(n) {
 		case JOptionPane.NO_OPTION:
-			handleLoad("path");
+			
+			int result5 = fc.showOpenDialog(null);
+			
+			String tempLoad = "";
+				
+			if (result5 == JFileChooser.APPROVE_OPTION) {
+				tempLoad = fc.getSelectedFile().getAbsolutePath();
+			}
+			
+			handleLoad(tempLoad);
+			
 			while (tilesetPath == "continue")
 				tilesetPath = userInputTileset(fc);
 			break;
+			
 		case JOptionPane.YES_OPTION:
 			//If User has chosen to create a new level
 			
@@ -594,11 +621,14 @@ public class MainFrame extends JFrame {
 						
 						int result2 = fc.showOpenDialog(null);
 						
-						if (result2 == JFileChooser.APPROVE_OPTION) {
-							String loadPath = fc.getSelectedFile().getAbsolutePath();
-						}
-						
 						String loadPath = "";
+						
+						if (result2 == JFileChooser.APPROVE_OPTION) {
+							loadPath = fc.getSelectedFile().getAbsolutePath();
+						} else {
+							System.out.println("Error with selecting load path");
+							System.exit(0);
+						}
 						
 						handleLoad(loadPath);
 						while (tilesetPath == "continue")
@@ -609,12 +639,40 @@ public class MainFrame extends JFrame {
 					case "Save":
 						System.out.println("Handle Save");
 						XMLHandler xml = new XMLHandler();
-						xml.saveToFile("hey", totalLayers, levelBuilderGrid, tileChooserContainer.getTileChooser().getGrid());
+						
+						JFileChooser temp = new JFileChooser();
+						
+						int result3 = temp.showSaveDialog(null);
+						
+						String savePath = "";
+						
+						if (result3 == JFileChooser.APPROVE_OPTION) {
+							savePath = temp.getSelectedFile().getAbsolutePath();
+						} else {
+							System.out.println("Error with selecting save path");
+							System.exit(0);
+						}
+						
+						xml.saveToFile(savePath, totalLayers, levelBuilderGrid, tileChooserContainer.getTileChooser().getGrid());
 						break;
 					case "Save As...":
 						System.out.println("Handle Save As");
 						XMLHandler xml3 = new XMLHandler();
-						xml3.saveToFile("hey", totalLayers, levelBuilderGrid, tileChooserContainer.getTileChooser().getGrid());
+						
+						JFileChooser temp2 = new JFileChooser();
+						
+						int result4 = temp2.showSaveDialog(null);
+						
+						String savePath2 = "";
+						
+						if (result4 == JFileChooser.APPROVE_OPTION) {
+							savePath2 = temp2.getSelectedFile().getAbsolutePath();
+						} else {
+							System.out.println("Error with selecting save path");
+							System.exit(0);
+						}
+						
+						xml3.saveToFile(savePath2, totalLayers, levelBuilderGrid, tileChooserContainer.getTileChooser().getGrid());
 						break;
 					case "Export As Layers":
 						System.out.println("Handle Export As Layers");
@@ -678,14 +736,6 @@ public class MainFrame extends JFrame {
 	{
 		String levelGrid = "LevelGrid";
 		String loadFile = path;
-		
-		JFileChooser loadFileChooser = new JFileChooser();
-		
-		int result2 = loadFileChooser.showOpenDialog(null);
-		
-		if (result2 == JFileChooser.APPROVE_OPTION) {
-			loadFile = loadFileChooser.getSelectedFile().getAbsolutePath();
-		}
 		
 		XMLHandler loader = new XMLHandler(loadFile);
 		ROW_COUNT = loader.getRows(levelGrid);
