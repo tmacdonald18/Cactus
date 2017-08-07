@@ -21,9 +21,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -100,12 +101,35 @@ public class MainFrame extends JFrame {
 	{
 		super("Cactus");
 		
+		FileHandler handler = null;
+		
+		File log = new File("C:" + File.separator + "Users" + File.separator +"n0286782" + File.separator + "Desktop" + File.separator + "cactus_log.txt");
+		try {
+			log.createNewFile();
+		} catch (IOException e3) {
+			// TODO Auto-generated catch block
+			e3.printStackTrace();
+		}
+		
+		try {
+			handler = new FileHandler("cactus_log.txt", true);
+		} catch (SecurityException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		} catch (IOException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		
+		Logger logger = Logger.getLogger("com.javacodegeeks.snippets.core");
+		logger.addHandler(handler);
+		
 		//set look and feel
 		try {
 			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
 				if ("Nimbus".equals(info.getName())) {
 					UIManager.setLookAndFeel(info.getClassName());
-					System.out.println("Got Nimbus look");
+					logger.info("Got Nimbus look");
 					break;
 				}
 			}
@@ -118,14 +142,22 @@ public class MainFrame extends JFrame {
 			}
 		}
 		
-		//if current_directory does not exist, then create it
-		current_directory = System.getProperty("user.dir");
-		current_session_path = current_directory + File.separator + "src" + File.separator + "current_session";
-		File path = new File(current_session_path);
-		
-		if (!path.exists())
-			path.mkdir();
-		
+		try {
+			//if current_directory does not exist, then create it
+			current_directory = System.getProperty("user.dir");
+			current_session_path = current_directory + File.separator + "src" + File.separator + "current_session";
+			File path = new File(current_session_path);
+			
+			if (!path.exists()) {
+				path.mkdir();
+				logger.info("Created Directory");
+			} else {
+				logger.warning("Could not create directory");
+			}
+			
+		} catch (Exception e) {
+			logger.severe("Error when attempting to create directory");
+		}
 		setUp();
 		startUp();		
 		
