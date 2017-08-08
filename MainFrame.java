@@ -237,7 +237,6 @@ public class MainFrame extends JFrame {
 			tilesetPath = userInputTileset(fc);
 	}
 	
-	
 	private String userInputTileset(JFileChooser fc)
 		/*
 		 * Prompts the user to select a tileset
@@ -254,7 +253,6 @@ public class MainFrame extends JFrame {
 			
 			return "continue";
 		}
-	
 	
 	private void layerDecision(String text) 
 	/*

@@ -319,4 +319,5 @@ public class XMLHandler {
 		
 		return imageAsString;
 	}
+
 }
