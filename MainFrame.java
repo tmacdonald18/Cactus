@@ -11,6 +11,7 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -21,14 +22,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.HashMap;
-import java.util.logging.FileHandler;
-import java.util.logging.Logger;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -123,7 +121,7 @@ public class MainFrame extends JFrame {
 		try {
 			//if current_directory does not exist, then create it
 			current_directory = System.getProperty("user.dir");
-			current_session_path = current_directory + File.separator + "src" + File.separator + "current_session" + File.separator;
+			current_session_path = current_directory + File.separator + "current_session" + File.separator;
 			File path = new File(current_session_path);
 			
 			if (!path.exists()) {
@@ -163,7 +161,7 @@ public class MainFrame extends JFrame {
 			case JOptionPane.NO_OPTION:
 				//This happens if the user hits yes or no
 				//Deletes all files out of current_session cache
-				File cur = new File("src" + File.separator + "current_session");
+				File cur = new File("current_session");
 				
 				for(File file : cur.listFiles())
 					if (!file.isDirectory())
@@ -578,10 +576,14 @@ public class MainFrame extends JFrame {
 			
 		});
 		
+		Magnifier mag = new Magnifier(levelBuilderGrid, new Dimension(200, 200), 2.0);
+		
 		//Put everything onto the JFrame content pane
 		contentPane = this.getContentPane();
 		contentPane.setLayout(new BorderLayout());
+		
 		contentPane.add(jp, BorderLayout.CENTER);
+		contentPane.add(mag, BorderLayout.NORTH);
 		contentPane.setBackground(new Color(128, 255, 128));
 		
 		//Initialize the menu bar

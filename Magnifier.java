@@ -45,7 +45,6 @@ public class Magnifier extends JComponent implements MouseMotionListener {
 		// if we can't get a robot, then we just never
 		// paint anything
 		try {
-	
 	        robot = new Robot();
 		} catch (AWTException awte) {
 			System.err.println ("Can't get a Robot");

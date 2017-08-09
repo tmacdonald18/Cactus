@@ -191,7 +191,7 @@ public class TileChooser extends JPanel {
         //Saves each tile as a png file
         for (int i = 0; i < imgs.length; i++) {
             try {
-				ImageIO.write(imgs[i], "png", new File(System.getProperty("user.dir") + File.separator + "src" + File.separator + "current_session" + File.separator + i + ".png"));
+				ImageIO.write(imgs[i], "png", new File(System.getProperty("user.dir") + File.separator + "current_session" + File.separator + i + ".png"));
 				System.out.println("src" + File.separator + "current_session" + File.separator + i + ".png");
 			} catch (IOException e) {
 				e.printStackTrace();
