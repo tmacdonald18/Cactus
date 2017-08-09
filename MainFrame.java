@@ -14,6 +14,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
@@ -24,9 +25,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.HashMap;
 
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -37,6 +39,9 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 
@@ -62,6 +67,8 @@ public class MainFrame extends JFrame {
 	//Holds the levelBuilderGrid
 	private JScrollPane levelScroll;
 	
+	private boolean showGrid = true, showZoom = false;
+	
 	private JFileChooser fc;
 	
 	//Holds the menu bar
@@ -83,6 +90,9 @@ public class MainFrame extends JFrame {
 	
 	//Holds the currently selected layer
 	private int selectedLayer = 0;
+	
+	private Magnifier mag;
+	private JFrame magFrame;
 	
 	//This hashmap should contain all of the currently selected tile images based on row and column
 	private HashMap<Integer, HashMap<Integer, BufferedImage>> selectedRows = new HashMap<Integer, HashMap<Integer, BufferedImage>>();
@@ -273,6 +283,9 @@ public class MainFrame extends JFrame {
 		if (text.contains("clear")) {
 			clearOutSelection();			
 		
+		} else if (text.contains("UPDATEIMAGE")) {
+			if (showZoom)
+				mag.updateImage(magFrame.getWidth(), magFrame.getHeight());
 		} else if (!scrolling) {
 		
 			//Split the text at commas, since each data segment is separated by a comma
@@ -317,6 +330,8 @@ public class MainFrame extends JFrame {
 				} else if (type.contains("regular")) {
 					//If the levelBuilder is transmitting
 					
+					
+					
 					if (tag.contains("rotate")) {
 						//If the builder wants to rotate a selection
 						int notches = Integer.parseInt(tag.split("~")[1]);
@@ -334,12 +349,17 @@ public class MainFrame extends JFrame {
 						} catch (Exception e) {
 							
 						}
+						
 					} else if (!selectedRows.isEmpty()) {
 						//If the hashmap is not empty
 						handleSelectionPaste(row, col);
 						
 					} else
 						System.out.println("Looks like there is no selected image");
+					
+					if (showZoom)
+						mag.updateImage(magFrame.getWidth(), magFrame.getHeight());
+					
 				}
 			}
 		}
@@ -451,11 +471,13 @@ public class MainFrame extends JFrame {
 	{
 		selectedRows.clear();
 		tileChooserContainer.getTileChooser().getGrid().setAllUnselected();
+		previewMatrix.clearPreview();
 	}
 	
 	private void startUp() 
 	/*
-	 * 
+	 * Starting up the MainFrame
+	 * Handles component placements
 	 */
 	{		
 		//Create a container to hold the grid
@@ -478,12 +500,16 @@ public class MainFrame extends JFrame {
 		gc.weighty = 1;
 		gc.gridx = 0;
 		gc.gridy = 0;
+		
+		levelBuilderGrid.setBorder(new LineBorder(Color.BLACK, 1, true));
+		
 		gridContainer.add(levelBuilderGrid, gc);
-		gridContainer.setBorder(new TitledBorder("Level Designer"));
+		
+		gridContainer.setBorder(new CompoundBorder(new EmptyBorder(10, 10, 10, 10), new TitledBorder("Level Designer")));
 		
 		//Create a new container for the tilechooser using the user inputed tilesetPath
 		tileChooserContainer = new OptionsPanel(tilesetPath);
-		tileChooserContainer.setBorder(new TitledBorder("Tile Selector"));
+		tileChooserContainer.setBorder(new CompoundBorder(new EmptyBorder(5, 5, 5, 5), new TitledBorder("Tile Selector")));
 		
 		//StringListener used to manage the decisions incoming from the child components
 		StringListener dataDecider = new StringListener(){
@@ -519,7 +545,7 @@ public class MainFrame extends JFrame {
 		//Assign scrollListener to both scroll bars
 		levelScroll.getHorizontalScrollBar().addAdjustmentListener(scrollListener);
 		levelScroll.getVerticalScrollBar().addAdjustmentListener(scrollListener);
-				
+		
 		//Create a Settings Component
 		Settings settings = new Settings();
 		settings.setStringListener(dataDecider);
@@ -532,6 +558,8 @@ public class MainFrame extends JFrame {
 		jt.addTab("Tileset", tileChooserContainer);
 		jt.addTab("Settings", settings);
 		jt.addTab("Collision Manager", new JPanel());
+		
+		jt.setBorder(new EmptyBorder(5, 5, 5, 5));
 		
 		//Create the split pane which will allow the user to control component sizes
 		JSplitPane jp = new JSplitPane();
@@ -576,15 +604,12 @@ public class MainFrame extends JFrame {
 			
 		});
 		
-		Magnifier mag = new Magnifier(levelBuilderGrid, new Dimension(200, 200), 2.0);
-		
 		//Put everything onto the JFrame content pane
 		contentPane = this.getContentPane();
 		contentPane.setLayout(new BorderLayout());
 		
 		contentPane.add(jp, BorderLayout.CENTER);
-		contentPane.add(mag, BorderLayout.NORTH);
-		contentPane.setBackground(new Color(128, 255, 128));
+		//contentPane.setBackground(new Color(128, 255, 128));
 		
 		//Initialize the menu bar
 		menuBar = createMenu();
@@ -700,12 +725,67 @@ public class MainFrame extends JFrame {
 						//Exports the grid as a .png file
 						levelBuilderGrid.exportGrid(totalLayers);
 						break;
+					case "Export As Image":
+						System.out.println("Handle Export As Image");
+					
+						//User has chosen to export
+						JFileChooser fc2 = new JFileChooser();
+						int returnVal2 = fc2.showSaveDialog(null);
+						
+						//Sets the levelBuilderGrids save path to the user selection
+						if (returnVal2 == JFileChooser.APPROVE_OPTION) {
+							levelBuilderGrid.setSavePath(fc2.getSelectedFile().getAbsolutePath());
+						}
+						
+						//Exports the grid as a .png file
+						levelBuilderGrid.exportGridAsImage(totalLayers);
+						break;
+					case "Toggle Grid":
+						System.out.println("Toggling the Grid");
+						
+						showGrid = ((AbstractButton)action.getSource()).getModel().isSelected();
+						
+						levelBuilderGrid.toggleGrid(showGrid);
+						
+						System.out.println("Show Grid is now: " + showGrid);
+						break;
+					case "Toggle Zoom":
+						System.out.println("Toggling the Zoom");
+						
+						showZoom = ((AbstractButton)action.getSource()).getModel().isSelected();
+						
+						if (showZoom) {
+							magFrame = new JFrame("Magnifier");
+							
+							mag = new Magnifier(new Dimension(150, 150), 2.0);
+							magFrame.getContentPane().add(mag);
+							magFrame.pack();
+							magFrame.setLocation(new Point(300, 300));
+							magFrame.setVisible(true);
+							//magFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+						} else {
+							magFrame.removeAll();
+							magFrame.dispose();
+						}
+					case "Zoom In":
+						System.out.println("Zooming In");
+						
+						if (showZoom)
+							mag.incrementZoom(0.5);
+						
+						break;
+					case "Zoom Out":
+						System.out.println("Zooming Out");
+						
+						if (showZoom)
+							mag.incrementZoom(-0.5);
 				}
 						
 			}
 			
 		};
 		
+		//File Menu Option
 		JMenu menu = new JMenu("File");
 		JMenuItem menuItem;
 		
@@ -737,6 +817,31 @@ public class MainFrame extends JFrame {
 		
 		menuBar.add(menu);
 		
+		JCheckBoxMenuItem checkBoxItem;
+		
+		//Edit Menu Option
+		JMenu editMenu = new JMenu("View");
+		checkBoxItem = new JCheckBoxMenuItem("Toggle Grid");
+		checkBoxItem.setSelected(true);
+		checkBoxItem.addActionListener(menuListener);
+		editMenu.add(checkBoxItem);
+		
+		editMenu.addSeparator();
+		
+		checkBoxItem = new JCheckBoxMenuItem("Toggle Zoom");
+		checkBoxItem.addActionListener(menuListener);
+		editMenu.add(checkBoxItem);
+		
+		menuItem = new JMenuItem("Zoom In");
+		menuItem.addActionListener(menuListener);
+		editMenu.add(menuItem);
+		
+		menuItem = new JMenuItem("Zoom Out");
+		menuItem.addActionListener(menuListener);
+		editMenu.add(menuItem);
+		
+		menuBar.add(editMenu);
+	
 		return menuBar;
 	}
 	

@@ -34,6 +34,8 @@ class Tile extends JPanel {
 	//Whether or not this tile is selected
 	private boolean selected = false;
 	
+	private boolean showGrid = true;
+	
 	//The type of grid this tile belongs to
 	private String type;
 		
@@ -286,8 +288,10 @@ class Tile extends JPanel {
 		
 		//Draw a black Rectangle grid square over the tile
 		//This should probably be changed to be lines, because some of the lines are getting cut off around the edges
-		g.setColor(Color.BLACK);
-		g.drawRect(0, 0, width, width);
+		if (showGrid) {
+			g.setColor(Color.BLACK);
+			g.drawRect(0, 0, width, width);
+		}
 	}
 
 	public boolean isCollision()
@@ -329,6 +333,12 @@ class Tile extends JPanel {
 	 */
 	{
 		this.previewLayer = img;
+		repaint();
+	}
+
+	public void setShowGrid(boolean flag)
+	{
+		showGrid = flag;
 		repaint();
 	}
 }

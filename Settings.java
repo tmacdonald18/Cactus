@@ -17,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -34,12 +35,19 @@ public class Settings extends JPanel {
 	//private JComboBox<String> layerList;
 	private JList<String> layerList;
 	
+	private JTable table;
+	
 	public Settings()
 	/*
 	 * This is a constructor
 	 */
 	{
 		totalLayerCount = 0;
+		
+		//String[] columnNames = {"Index", "Layer Type", "Visible?"};
+		//Object[][] data = {{new Integer(0), "Tile", new Boolean(true)}, {new Integer(1), "Tile", new Boolean(true)}};
+		
+		//table = new JTable(data, columnNames);
 		
 		//Initialize combo box
 		//this.layerList = new JComboBox<String>(layers);

@@ -204,6 +204,11 @@ public class ImageMatrix {
 		System.out.println("Rotated right.");
 	}
 	
+	public void clearPreview() 
+	{
+		matrix = null;
+	}
+	
 	public BufferedImage getTile(int row, int col) 
 	{
 		return matrix[row][col];

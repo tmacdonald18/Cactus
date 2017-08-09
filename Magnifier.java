@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
@@ -24,21 +25,18 @@ import javax.swing.JLabel;
  * Purpose:	Display a zoomed in area of the screen to get a better view
  * 			of the map being created
  */
-public class Magnifier extends JComponent implements MouseMotionListener {
+public class Magnifier extends JComponent {
 	
 	double zoom;
-	JComponent comp;
 	Point point;
 	Dimension mySize;
 	Robot robot;
 	
-	public Magnifier (JComponent comp, Dimension size, double zoom) {
+	public Magnifier (Dimension size, double zoom) {
 	
-		this.comp = comp;
 		
 		// flag to say don't draw until we get a MouseMotionEvent
 		point = new Point (-1, -1);
-		comp.addMouseMotionListener(this);
 		this.mySize = size;
 		this.zoom = zoom;
 		
@@ -53,7 +51,7 @@ public class Magnifier extends JComponent implements MouseMotionListener {
 	}
 	
 	public void paint (Graphics g) {
-		if ((robot == null) || (point.x == -1)) {
+		if ((robot == null)) {
 			g.setColor (Color.blue);
 			g.fillRect (0, 0, mySize.width, mySize.height);
 			return;
@@ -73,44 +71,24 @@ public class Magnifier extends JComponent implements MouseMotionListener {
 		int grabHeight = (int) ((double) mySize.height / zoom);
 
 		// upper-left corner is current point
-		return new Rectangle (point.x, point.y, grabWidth, grabHeight);
+		return new Rectangle (point.x - grabWidth/2, point.y - grabHeight/2, grabWidth, grabHeight);
 	}
 	
 	public Dimension getPreferredSize() { return mySize; }
 	public Dimension getMinimumSize() { return mySize; }
 	public Dimension getMaximumSize() { return mySize; }
 	
-	// MouseMotionListener implementations
-	public void mouseMoved (MouseEvent e) {
-		Point offsetPoint = comp.getLocationOnScreen();
-		e.translatePoint (offsetPoint.x, offsetPoint.y);
-		point = e.getPoint();
+	public void incrementZoom(double zoomAdd)
+	{
+		this.zoom = this.zoom + zoomAdd;
 		repaint();
-	}	 
-
-	public void mouseDragged (MouseEvent e) {
-		mouseMoved (e); 
-	} 
+	}
 	
-	public static void main(String args[]) {
-		JFileChooser chooser = new JFileChooser();
-		chooser.showOpenDialog(null);
-		File f = chooser.getSelectedFile();
-		
-		ImageIcon i = new ImageIcon(f.getPath());
-		JLabel l = new JLabel(i);
-		
-		JFrame imgFrame = new JFrame("Image");
-		imgFrame.getContentPane().add(l);
-		imgFrame.pack();
-		imgFrame.setVisible(true);
-		
-		JFrame magFrame = new JFrame("Mag");
-		
-		Magnifier mag = new Magnifier(l, new Dimension(150, 150), 2.0);
-		magFrame.getContentPane().add(mag);
-		magFrame.pack();
-		magFrame.setLocation(new Point(imgFrame.getLocation().x + imgFrame.getWidth(), imgFrame.getLocation().y));
-		magFrame.setVisible(true);
+	public void updateImage(int width, int height)
+	{
+		point = MouseInfo.getPointerInfo().getLocation();
+		mySize.width = width;
+		mySize.height = height;
+		repaint();
 	}
 }

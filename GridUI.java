@@ -11,6 +11,8 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +41,7 @@ public class GridUI extends JPanel {
 	//Allows for String messages to be intercepted from Tiles and Interpreted by the MainFrame
 	private StringListener gridListener;
 	private StringListener sl;
+	private MouseMotionListener mo;
 	
 	public GridUI(int rows, int cols, final String type, BufferedImage[][][] images, int layers, int trigger) 
 	/*
@@ -61,6 +64,21 @@ public class GridUI extends JPanel {
 			@Override
 			public void textEmitted(String text) {
 				gridListener.textEmitted(type + "," + text);
+			}
+			
+		};
+		
+		mo = new MouseMotionListener() {
+
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				gridListener.textEmitted("UPDATEIMAGE");
 			}
 			
 		};
@@ -147,6 +165,7 @@ public class GridUI extends JPanel {
 				
 				add(tiles[i][j], gc);
 				tiles[i][j].setStringListener(sl);
+				tiles[i][j].addMouseMotionListener(mo);
 			}
 		}
 	}
@@ -169,6 +188,7 @@ public class GridUI extends JPanel {
 				
 				add(tiles[i][j], gc);
 				tiles[i][j].setStringListener(sl);
+				tiles[i][j].addMouseMotionListener(mo);
 			}
 		}
 		
@@ -238,6 +258,37 @@ public class GridUI extends JPanel {
 		
 	}
 	
+	public void exportGridAsImage(int numLayers)
+	{
+		BufferedImage tempResult;
+		Graphics g;
+		
+		BufferedImage mainResult = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_INT_ARGB);
+		Graphics gMain = mainResult.getGraphics();
+		
+		//first make sure the save path does not yet have an extension
+		String path = this.savePath;
+		if (path.endsWith(".png"))
+			path = path.replace(".png", "");
+		
+		for (int i = 0; i <= numLayers; i++) {
+			tempResult = new BufferedImage(cols * 32, rows * 32, BufferedImage.TYPE_INT_ARGB);
+			g = tempResult.getGraphics();
+			drawLayer(g, i);
+			
+			//Draw layer to main image
+			gMain.drawImage(tempResult, 0, 0, null);
+			
+		}
+		
+		//write to file
+		try {
+			ImageIO.write(mainResult, "png", new File(path + ".png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
+	}
+	
 	private void drawLayer(Graphics g, int layer)
 	/*
 	 * Helped function for drawing each layer to a BufferedImage
@@ -262,6 +313,15 @@ public class GridUI extends JPanel {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++)
 				tiles[i][j].setSelected(false);
+		}
+	}
+	
+	public void toggleGrid(boolean flag)
+	{
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				tiles[i][j].setShowGrid(flag);
+			}
 		}
 	}
 
