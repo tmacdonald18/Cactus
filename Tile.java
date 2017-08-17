@@ -20,7 +20,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 
-class Tile extends JPanel {
+class Tile {
 	
 	//Store dimensions for each Rectangle/BufferedImage for drawing
 	private int width;
@@ -88,122 +88,6 @@ class Tile extends JPanel {
 		this.rotate = false;
 		this.previewLayer = null;
 		
-		//Create and implement a new mouse listener to wait for user clicks
-		mouseListener = new MouseListener() {
-
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				//Currently do nothing
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				handleMouseEnter(e);
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e) {
-				handleMouseExit(e);
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-				handleMousePressed(e);
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {
-				//Should create the preview tiles if released
-				System.out.println("You just released the mouse!");
-				handleMouseRelease(e);
-			}
-			
-		};
-		
-		//Create and implement a new mouse wheel listener to wait for mouse wheel movement
-		mouseWheelListener = new MouseWheelListener() {
-
-			@Override
-			public void mouseWheelMoved(MouseWheelEvent e) {
-				handleMouseWheelMoved(e);
-			}
-			
-		};
-		
-		//Add mouseListener to the Tile
-		addMouseListener(mouseListener);
-		
-		//Add mouse wheel listener to the Tile
-		addMouseWheelListener(mouseWheelListener);
-		
-		//Not sure if this is necessary?
-		setPreferredSize(new Dimension(width, width));
-	}
-	
-	private void handleMouseExit(MouseEvent e)
-	/*
-	 * Triggered when mouse leaves the tile
-	 */
-	{
-		if (type == "regular") {
-		listener.textEmitted(row + "," + col +",removePreview");
-		}
-	}
-	
-	private void handleMouseRelease(MouseEvent e)
-	/*
-	 * Triggered when mouse is released
-	 */
-	{
-		//Initialize a BufferedImage array with all nulls to the size of max hashmap rows and cols
-		if (e.getModifiers() == MouseEvent.BUTTON1_MASK && type == "mini") {
-			listener.textEmitted(row + "," + col + ",makeMatrix");
-		}
-		
-	}
-	
-	private void handleMouseEnter(MouseEvent e)
-	/*
-	 * Triggered when a mouse enters the Tile
-	 */
-	{
-		//If left button is down, send a dragged message
-		//Else, if right button is down and it's a regular tile, send a delete message
-		//Else, tell MainFrame to display the preview layer
-		if (e.getModifiers() == MouseEvent.BUTTON1_MASK) {
-			listener.textEmitted(row + "," + col + ",dragged");
-		} else if (e.getModifiers() == MouseEvent.BUTTON3_MASK && type == "regular") {
-			listener.textEmitted(row + "," + col + ",delete");
-		} else if (type == "regular") {
-			listener.textEmitted(row + "," + col + ",showPreview");
-		}
-	}
-	
-	private void handleMousePressed(MouseEvent e)
-	/*
-	 * Triggered when mouse is pressed in the Tile
-	 */
-	{
-		//If left button is pressed, send a clicked message
-		//Else, if right button is pressed and it's a regular tile, send a delete message
-		if (e.getModifiers() == MouseEvent.BUTTON1_MASK) {
-			listener.textEmitted(row + "," + col + ",clicked");
-		} else if (e.getModifiers() == MouseEvent.BUTTON3_MASK && type == "regular") {
-			listener.textEmitted(row + "," + col + ",delete");
-		}
-	}
-	
-	private void handleMouseWheelMoved(MouseWheelEvent e)
-	/*
-	 * Triggered when the mouse wheel is moved in the Tile
-	 */
-	{
-		//Transmits the row, column, and amount of rotation
-		//Note: Notches always seems to be either positve 1 or negative 1
-		if (type == "regular") {
-		int notches = e.getWheelRotation();
-		listener.textEmitted(row + "," + col + ",rotate~" + notches);
-		}
 	}
 	
 	public void rotation(int layer, boolean positive) 
@@ -257,42 +141,7 @@ class Tile extends JPanel {
 		this.listener = listener;
 	}
 	
-	@Override
-	protected void paintComponent(Graphics g) 
-	/*
-	 * Paints the Tile
-	 */
-	{
-		super.paintComponent(g);
-		
-		//If there is an image set, then paint
-		if (image != null) {
-			
-			//For each Tile layer
-			for (int i = 0; i < image.length; i++) {
-				g.drawImage(image[i], 0, 0, this);
-			}
-		} 
-		
-		if (previewLayer != null) {
-			Graphics2D g2d = (Graphics2D) g;
-			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-			g2d.drawImage(previewLayer, 0, 0, this);
-		}
-		
-		//If the tile is selected, overlay it with a transparent blue Rectangle
-		if (selected) {
-			g.setColor(new Color(135, 206, 235, 225));
-			g.fillRect(0, 0, width, width);
-		}
-		
-		//Draw a black Rectangle grid square over the tile
-		//This should probably be changed to be lines, because some of the lines are getting cut off around the edges
-		if (showGrid) {
-			g.setColor(Color.BLACK);
-			g.drawRect(0, 0, width, width);
-		}
-	}
+	
 
 	public boolean isCollision()
 	/*
@@ -324,7 +173,6 @@ class Tile extends JPanel {
 	 */
 	{
 		this.selected = selected;
-		repaint();
 	}
 	
 	public void setPreviewLayer(BufferedImage img)
@@ -333,12 +181,10 @@ class Tile extends JPanel {
 	 */
 	{
 		this.previewLayer = img;
-		repaint();
 	}
 
 	public void setShowGrid(boolean flag)
 	{
 		showGrid = flag;
-		repaint();
 	}
 }

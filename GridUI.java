@@ -7,12 +7,18 @@
  * 			Also contains the function for saving.
  */
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -83,6 +89,56 @@ public class GridUI extends JPanel {
 			
 		};
 		
+		//Create and implement a new mouse listener to wait for user clicks
+		MouseListener mouseListener = new MouseListener() {
+	
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				//Currently do nothing
+			}
+	
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				handleMouseEnter(e);
+			}
+	
+			@Override
+			public void mouseExited(MouseEvent e) {
+				handleMouseExit(e);
+			}
+	
+			@Override
+			public void mousePressed(MouseEvent e) {
+				handleMousePressed(e);
+			}
+	
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				//Should create the preview tiles if released
+				System.out.println("You just released the mouse!");
+				handleMouseRelease(e);
+			}
+			
+		};
+				
+		//Create and implement a new mouse wheel listener to wait for mouse wheel movement
+		MouseWheelListener mouseWheelListener = new MouseWheelListener() {
+
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) {
+				handleMouseWheelMoved(e);
+			}
+			
+		};
+		
+		//Add mouseListener to the Tile
+		addMouseListener(mouseListener);
+				
+		//Add mouse wheel listener to the Tile
+		addMouseWheelListener(mouseWheelListener);
+		
+		addMouseMotionListener(mo);
+		
 		if (trigger == 1) { 
 			this.tileWidth = 32;
 			
@@ -143,7 +199,7 @@ public class GridUI extends JPanel {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols; j++) {
 				tiles[i][j] = new Tile(this.tileWidth, i, j, type);
-				add(tiles[i][j]);
+				//add(tiles[i][j]);
 				tiles[i][j].setStringListener(sl);
 			}
 		}
@@ -163,9 +219,9 @@ public class GridUI extends JPanel {
 				gc.gridy = j;
 				tiles[i][j] = new Tile(this.tileWidth, i, j, type);
 				
-				add(tiles[i][j], gc);
+				//add(tiles[i][j], gc);
 				tiles[i][j].setStringListener(sl);
-				tiles[i][j].addMouseMotionListener(mo);
+				//tiles[i][j].addMouseMotionListener(mo);
 			}
 		}
 	}
@@ -186,9 +242,9 @@ public class GridUI extends JPanel {
 				gc.gridy = j;
 				tiles[i][j] = new Tile(this.tileWidth, i, j, type);
 				
-				add(tiles[i][j], gc);
+				//add(tiles[i][j], gc);
 				tiles[i][j].setStringListener(sl);
-				tiles[i][j].addMouseMotionListener(mo);
+				//tiles[i][j].addMouseMotionListener(mo);
 			}
 		}
 		
@@ -339,6 +395,113 @@ public class GridUI extends JPanel {
 
 	public void setCols(int cols) {
 		this.cols = cols;
+	}
+	
+	@Override
+	protected void paintComponent(Graphics g) 
+	/*
+	 * Paints the Tile
+	 */
+	{
+		super.paintComponent(g);
+		
+		Graphics2D g2 = (Graphics2D) g;
+
+	    g2.drawImage(image, imageX, imageY, this);
+		
+		//If there is an image set, then paint
+		if (image != null) {
+			
+			//For each Tile layer
+			for (int i = 0; i < image.length; i++) {
+				g.drawImage(image[i], 0, 0, this);
+			}
+		} 
+		
+		if (previewLayer != null) {
+			Graphics2D g2d = (Graphics2D) g;
+			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+			g2d.drawImage(previewLayer, 0, 0, this);
+		}
+		
+		//If the tile is selected, overlay it with a transparent blue Rectangle
+		if (selected) {
+			g.setColor(new Color(135, 206, 235, 225));
+			g.fillRect(0, 0, width, width);
+		}
+		
+		//Draw a black Rectangle grid square over the tile
+		//This should probably be changed to be lines, because some of the lines are getting cut off around the edges
+		if (showGrid) {
+			g.setColor(Color.BLACK);
+			g.drawRect(0, 0, width, width);
+		}
+	}
+
+	private void handleMouseExit(MouseEvent e)
+	/*
+	 * Triggered when mouse leaves the tile
+	 */
+	{
+		if (type == "regular") {
+		sl.textEmitted(type + "," + e.getY() + "," + e.getX() + ",removePreview");
+		}
+	}
+	
+	private void handleMouseRelease(MouseEvent e)
+	/*
+	 * Triggered when mouse is released
+	 */
+	{
+		//Initialize a BufferedImage array with all nulls to the size of max hashmap rows and cols
+		if (e.getModifiers() == MouseEvent.BUTTON1_MASK && type == "mini") {
+			sl.textEmitted(type + "," + e.getY() + "," + e.getX() + ",makeMatrix");
+		}
+		
+	}
+	
+	private void handleMouseEnter(MouseEvent e)
+	/*
+	 * Triggered when a mouse enters the Tile
+	 */
+	{
+		//If left button is down, send a dragged message
+		//Else, if right button is down and it's a regular tile, send a delete message
+		//Else, tell MainFrame to display the preview layer
+		if (e.getModifiers() == MouseEvent.BUTTON1_MASK) {
+			sl.textEmitted(type + "," + e.getY() + "," + e.getX() + ",dragged");
+		} else if (e.getModifiers() == MouseEvent.BUTTON3_MASK && type == "regular") {
+			sl.textEmitted(type + "," + e.getY() + "," + e.getX() + ",delete");
+		} else if (type == "regular") {
+			sl.textEmitted(type + "," + e.getY() + "," + e.getX() + ",showPreview");
+		}
+	}
+	
+	private void handleMousePressed(MouseEvent e)
+	/*
+	 * Triggered when mouse is pressed in the Tile
+	 */
+	{
+		//If left button is pressed, send a clicked message
+		//Else, if right button is pressed and it's a regular tile, send a delete message
+		if (e.getModifiers() == MouseEvent.BUTTON1_MASK) {
+			sl.textEmitted(type + "," + e.getY() + "," + e.getX() + ",clicked");
+		} else if (e.getModifiers() == MouseEvent.BUTTON3_MASK && type == "regular") {
+			sl.textEmitted(type + "," + e.getY() + "," + e.getX() + ",delete");
+		}
+	}
+	
+	private void handleMouseWheelMoved(MouseWheelEvent e)
+	/*
+	 * Triggered when the mouse wheel is moved in the Tile
+	 */
+	{
+		//Transmits the row, column, and amount of rotation
+		//Note: Notches always seems to be either positive 1 or negative 1
+		if (type == "regular") {
+		int notches = e.getWheelRotation();
+		sl.textEmitted(type + "," + e.getY() + "," + e.getX() + ",rotate~" + notches);
+		}
 	}
 	
 	
